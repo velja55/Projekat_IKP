@@ -1,77 +1,153 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
-#include <winsock2.h>
-#include "HashSetSS.cpp"
-#include <xutility>
-typedef struct {
-    int key;          // Ključ (ID)
-    HashSet value;    // Vrednost (HashSet sa SOCKET-ima)
-    int isOccupied;   // Indikator da li je ova lokacija zauzeta
-} HashSetNode;
+#include <string.h>
 
-// Struktura HashSet-a koji sadrži HashSet-ove
-typedef struct {
-    HashSetNode* table;  // Tabela koja sadrži HashSetNode strukture
-    size_t size;         // Trenutni broj elemenata
-    size_t capacity;     // Trenutna veličina tabele
-} HashSetOfHashSets;
+#include "LinkedList.h"
 
-// Funkcija za inicijalizaciju HashSet-a sa HashSet-ovima
-void initHashSetOfHashSets(HashSetOfHashSets* set, size_t initialCapacity) {
-    set->capacity = initialCapacity;
-    set->size = 0;
-    set->table = (HashSetNode*)calloc(set->capacity, sizeof(HashSetNode));
-    if (set->table == NULL) {
-        printf("Greška pri alokaciji memorije za tabelu.\n");
-        exit(1);
+#include "HashSetForSubscribers.h"
+
+// Function to initialize the HashSet
+void initHashSet(HashSet* hashSet) {
+    hashSet->capacity = INITIAL_HASH_TABLE_SIZE;
+    hashSet->size = 0;
+    hashSet->buckets = (HashNode**)calloc(hashSet->capacity, sizeof(HashNode*));
+    if (hashSet->buckets == NULL) {
+        printf("Error: Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
     }
 }
 
-// Funkcija za pronalaženje indeksa pomoću hash-a i linearne probe
-int findIndex(HashSetOfHashSets* set, int key) {
-    unsigned int index = hash(key, set->capacity);
-    unsigned int originalIndex = index;
+// Hash function to map a key to a bucket
+unsigned int hashFunction(int key, size_t capacity) {
+    // FNV-1a Hashing Algorithm (a simple but effective string hashing method)
+    unsigned int hash = 2166136261u;  // FNV-1a initial prime number
+    hash ^= key & 0xFF;  // XOR the lower byte of the key
+    hash *= 16777619u;   // Multiply by a constant prime number
+    return hash % capacity;  // Return the hash value within the table capacity
+}
 
-    while (set->table[index].isOccupied && set->table[index].key != key) {
-        index = (index + 1) % set->capacity;
-        if (index == originalIndex) {
-            return -1; // Tabela je puna
+// Function to find a publisher's node in the HashSet
+HashNode* findPublisherNode(HashSet* hashSet, int publisherKey) {
+    unsigned int hashIndex = hashFunction(publisherKey, hashSet->capacity);
+    HashNode* current = hashSet->buckets[hashIndex];
+    while (current != NULL) {
+        if (current->key == publisherKey) {
+            return current;  // Publisher found
         }
+        current = current->next;
     }
-    return index;
+    return NULL;  // Publisher not found
 }
 
-// Dodavanje HashSet-a unutar HashSetOfHashSets
-void addToHashSetOfHashSets(HashSetOfHashSets* set, int key) {
-    int index = findIndex(set, key);
-    if (index == -1) {
-        printf("HashSet je pun.\n");
+// Function to change the maximum size of the subscribers list for a publisher, SAmo se moze povecati velicina liste ne sme se smanjivati !!!
+void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMaxSize) {
+    // Find the publisher node in the hash set
+    HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
+
+    // If the publisher is found, update the maxSize of its subscriber list
+    if (publisherNode != NULL) {
+        publisherNode->subscribers.maxSize = newMaxSize;
+        printf("Max size for publisher %d changed to %zu\n", publisherKey, newMaxSize);
+    }
+    else {
+        printf("Publisher with key %d not found.\n", publisherKey);
+    }
+}
+
+
+
+
+
+
+// Function to resize the HashSet    -> kada se hashset popuni onda cemo raditi resizovanje
+void resizeHashSet(HashSet* hashSet) {
+    size_t newCapacity = hashSet->capacity * 2;
+    HashNode** newBuckets = (HashNode**)calloc(newCapacity, sizeof(HashNode*));
+    if (newBuckets == NULL) {
+        printf("Error: Memory allocation failed during resizing.\n");
         return;
     }
 
-    if (!set->table[index].isOccupied) {
-        set->table[index].key = key;
-        set->table[index].isOccupied = 1;
-        initHashSet(&set->table[index].value, INITIAL_TABLE_SIZE); // Kreiraj unutrašnji HashSet
-        set->size++;
-    }
-}
+    // Rehash all nodes into the new table
+    for (size_t i = 0; i < hashSet->capacity; i++) {
+        HashNode* current = hashSet->buckets[i];
+        while (current != NULL) {
+            HashNode* temp = current;
+            current = current->next;
 
-// Dohvatanje HashSet-a iz HashSetOfHashSets na osnovu ključa
-HashSet* getFromHashSetOfHashSets(HashSetOfHashSets* set, int key) {
-    int index = findIndex(set, key);
-    if (index == -1 || !set->table[index].isOccupied) {
-        return NULL; // Ključ nije pronađen
-    }
-    return &set->table[index].value;
-}
-
-// Oslobađanje resursa HashSet-a sa HashSet-ovima
-void freeHashSetOfHashSets(HashSetOfHashSets* set) {
-    for (size_t i = 0; i < set->capacity; i++) {
-        if (set->table[i].isOccupied) {
-            freeHashSet(&set->table[i].value); // Oslobodi unutrašnji HashSet
+            unsigned int newHashIndex = hashFunction(temp->key, newCapacity);
+            temp->next = newBuckets[newHashIndex];
+            newBuckets[newHashIndex] = temp;
         }
     }
-    free(set->table);
+
+    // Free old buckets and update the hash table
+    free(hashSet->buckets);
+    hashSet->buckets = newBuckets;
+    hashSet->capacity = newCapacity;
+
+    printf("HashSet resized to new capacity: %zu\n", newCapacity);
+}
+
+// Function to add a subscriber to a publisher's list
+void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket) {
+    // Resize if load factor exceeds the threshold
+    if ((float)(hashSet->size + 1) / hashSet->capacity > LOAD_FACTOR_THRESHOLD) {
+        resizeHashSet(hashSet);
+    }
+
+    unsigned int hashIndex = hashFunction(publisherKey, hashSet->capacity);
+
+    // Find publisher's node in the hash table
+    HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
+    if (publisherNode == NULL) {
+        // If the publisher doesn't exist, create a new node
+        publisherNode = (HashNode*)malloc(sizeof(HashNode));
+        if (publisherNode == NULL) {
+            printf("Error: Memory allocation failed.\n");
+            return;
+        }
+        publisherNode->key = publisherKey;
+        initList(&publisherNode->subscribers);
+        publisherNode->next = hashSet->buckets[hashIndex];
+        hashSet->buckets[hashIndex] = publisherNode;  // Insert at the head of the bucket
+        hashSet->size++;
+    }
+
+    // Add the subscriber to the publisher's list
+    add(&publisherNode->subscribers, subscriberKey, subscriberSocket);
+}
+
+// Function to remove a subscriber from a publisher's list
+void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey) {
+    HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
+    if (publisherNode != NULL) {
+        removeElement(&publisherNode->subscribers, subscriberKey);
+    }
+}
+
+// Function to get the subscriber list for a publisher
+LinkedList* getSubscribers(HashSet* hashSet, int publisherKey) {
+    HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
+    if (publisherNode != NULL) {
+        return &publisherNode->subscribers;
+    }
+    return NULL;  // Publisher not found
+}
+
+// Function to free the entire HashSet
+void freeHashSet(HashSet* hashSet) {
+    for (size_t i = 0; i < hashSet->capacity; i++) {
+        HashNode* current = hashSet->buckets[i];
+        while (current != NULL) {
+            HashNode* temp = current;
+            current = current->next;
+            freeList(&temp->subscribers);  // Free the subscribers list
+            free(temp);
+        }
+    }
+    free(hashSet->buckets);
+    hashSet->buckets = NULL;
+    hashSet->capacity = 0;
+    hashSet->size = 0;
 }

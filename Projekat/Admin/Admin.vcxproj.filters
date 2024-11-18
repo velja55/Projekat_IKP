@@ -13,19 +13,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="HashSetSS">
-      <UniqueIdentifier>{7ad6bffb-f22c-45e3-b74f-6d786b409ed2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HashSetForSubscribers">
       <UniqueIdentifier>{e9ac87d6-abac-4f86-9942-127a9524f72c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LinkedList">
+      <UniqueIdentifier>{7ad6bffb-f22c-45e3-b74f-6d786b409ed2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="QueuePublisher">
+      <UniqueIdentifier>{4c427fcf-3583-4fbb-a2a0-dfa934cbfc95}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HashSetSS.cpp">
-      <Filter>HashSetSS</Filter>
+    <ClCompile Include="LinkedList.cpp">
+      <Filter>LinkedList</Filter>
     </ClCompile>
     <ClCompile Include="HashSetForSubscribers.cpp">
       <Filter>HashSetForSubscribers</Filter>
     </ClCompile>
+    <ClCompile Include="QueuePublisher.cpp">
+      <Filter>QueuePublisher</Filter>
+    </ClCompile>
+    <ClCompile Include="MainAdmin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LinkedList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HashSetForSubscribers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
