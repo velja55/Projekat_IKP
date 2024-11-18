@@ -50,3 +50,15 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+*.vsidx
+*.tlog
+*.log
+*.vsidx
+*.vsidx
+/Projekat/.vs/Projekat/FileContentIndex
+/Projekat/.vs/Projekat/v17
+/Projekat/.vs/Projekat/v17
+/Projekat/Admin/x64/Debug
+/Projekat/Admin/x64/Debug
+/Projekat/Admin/x64
+/Projekat/Admin/x64

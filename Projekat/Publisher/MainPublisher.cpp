@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <winsock2.h>
-#include <ws2tcpip.h> // For inet_pton
+#include <ws2tcpip.h> // Za inet_pton
 
 #define MAX_BUFFER_SIZE 1024
 #define SERVER_PORT 12345
@@ -13,53 +13,53 @@ int main() {
     struct sockaddr_in server_addr;
     char buffer[MAX_BUFFER_SIZE];
 
-    // Initialize Winsock
+    // Inicijalizacija Winsock-a
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        printf("WSAStartup failed\n");
+        printf("WSAStartup nije uspeo\n");
         exit(EXIT_FAILURE);
     }
 
-    // Create a UDP socket
+    // Kreiranje UDP soketa
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sockfd == INVALID_SOCKET) {
-        printf("Socket creation failed\n");
+        printf("Kreiranje soketa nije uspelo\n");
         WSACleanup();
         exit(EXIT_FAILURE);
     }
 
-    // Prepare the server address structure
+    // Konfiguracija adrese servera
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
 
-    // Use inet_pton to convert the IP address
+    // Pretvaranje IP adrese u binarni oblik
     if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
-        printf("Invalid IP address\n");
+        printf("Neispravna IP adresa\n");
         closesocket(sockfd);
         WSACleanup();
         exit(EXIT_FAILURE);
     }
 
-    // Send a message to the server
-    printf("Enter message to send to server: ");
+    // Slanje poruke serveru
+    printf("Unesite poruku za slanje serveru: ");
     fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0'; // Remove trailing newline
+    buffer[strcspn(buffer, "\n")] = '\0'; // Uklanjanje znaka za novi red
 
     sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
-    // Receive response from the server
+    // Prijem odgovora od servera
     int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
     if (bytes_received == SOCKET_ERROR) {
-        printf("recvfrom failed\n");
+        printf("recvfrom nije uspeo\n");
         closesocket(sockfd);
         WSACleanup();
         exit(EXIT_FAILURE);
     }
 
-    buffer[bytes_received] = '\0'; // Null-terminate the received message
-    printf("Received from server: %s\n", buffer);
+    buffer[bytes_received] = '\0'; // Završavanje primljene poruke
+    printf("Primljeno od servera: %s\n", buffer);
 
-    // Close the socket
+    // Zatvaranje soketa
     closesocket(sockfd);
     WSACleanup();
 
