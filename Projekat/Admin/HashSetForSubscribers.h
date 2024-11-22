@@ -15,12 +15,13 @@
 typedef struct HashNode {
     int key;                    // Key for the publisher
     LinkedList subscribers;     // Linked list of subscribers
-    struct HashNode* next;      // For collision handling (separate chaining)
+
+    struct HashNode* next;      // For collision handling (separate chaining)   Ako dobijemo isti buckets[hash(key)] onda ih ulancavamo na istom indexu vise HashNodo-va
 } HashNode;
 
 // Hash table structure
 typedef struct {
-    HashNode** buckets;         // Array of pointers to HashNode
+    HashNode** buckets;         // Array of pointers to HashNode                buckets[hashfunction(key)], index nam je 
     size_t capacity;            // Current size of the hash table
     size_t size;                // Current number of elements in the hash table
 } HashSet;
@@ -40,6 +41,9 @@ void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMa
 // Function to resize the HashSet (rehashed)
 void resizeHashSet(HashSet* hashSet);
 
+//Functio nto add Publisher
+void addPublisher(HashSet* hashSet, int publisherID, size_t maxSize);
+
 // Function to add a subscriber to a publisher's list
 void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket);
 
@@ -48,6 +52,9 @@ void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey);
 
 // Function to get the subscriber list for a publisher
 LinkedList* getSubscribers(HashSet* hashSet, int publisherKey);
+
+
+void printHashSet(HashSet* hashSet);
 
 // Function to free the entire HashSet
 void freeHashSet(HashSet* hashSet);

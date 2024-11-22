@@ -63,7 +63,7 @@ int main() {
         getchar();                                    // Uklanja znak za novi red koji ostaje nakon unosa broja.
 
         // Kombinovanje naziva i maksimalne veličine u jedan string za slanje.
-        snprintf(buffer, sizeof(buffer), "id=%s|naziv=%s|maxsize=%d", "12345", message, max_size);  // Spajanje naziva i maksimalne veličine sa separatorom '|'.
+        snprintf(buffer, sizeof(buffer), "id=%d|naziv=%s|maxsize=%d", ntohs(((struct sockaddr_in*)&server_addr)->sin_port), message, max_size);
 
         // Šalje poruku serveru.
         sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
