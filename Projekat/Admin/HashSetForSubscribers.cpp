@@ -54,11 +54,6 @@ void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMa
     }
 }
 
-
-
-
-
-
 // Function to resize the HashSet    -> kada se hashset popuni onda cemo raditi resizovanje
 void resizeHashSet(HashSet* hashSet) {
     size_t newCapacity = hashSet->capacity * 2;

@@ -1,17 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct QueueNode {
-    int idPublisher;
-    int newMaxSize;
-    struct QueueNode* next;
-} QueueNode;
-
-typedef struct {
-    QueueNode* front;
-    QueueNode* rear;
-    size_t size;
-} Queue;
+#include "Queue.h"
 
 void initQueue(Queue* queue) {
     queue->front = NULL;

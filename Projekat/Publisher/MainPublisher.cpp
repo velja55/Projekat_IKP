@@ -1,67 +1,89 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <winsock2.h>
-#include <ws2tcpip.h> // Za inet_pton
+#include <ws2tcpip.h>  // For inet_pton
 
-#define MAX_BUFFER_SIZE 1024
-#define SERVER_PORT 12345
+#define MAX_BUFFER_SIZE 1024         // Definiše maksimalnu veličinu bafera (1024 bajta) za prijem i slanje podataka.
+#define SERVER_PORT 12345            // Definiše port na kojem server komunicira sa klijentima (UDP port 12345).
 
 int main() {
-    WSADATA wsaData;
-    SOCKET sockfd;
-    struct sockaddr_in server_addr;
-    char buffer[MAX_BUFFER_SIZE];
+    WSADATA wsaData;                    // Struktura koja sadrži informacije o Winsock verziji i drugim podešavanjima.
 
-    // Inicijalizacija Winsock-a
+    // Pokreće Winsock biblioteku sa verzijom 2.2. Ako inicijalizacija ne uspe, izlazi sa greškom.
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        printf("WSAStartup nije uspeo\n");
-        exit(EXIT_FAILURE);
+        printf("WSAStartup failed\n");            // Ako je inicijalizacija neuspešna, ispisuje grešku.
+        exit(EXIT_FAILURE);                       // Izađe iz programa sa kodom greške.
     }
 
-    // Kreiranje UDP soketa
+    SOCKET sockfd;                         // Definiše soket za komunikaciju (UDP socket).
+    struct sockaddr_in server_addr;         // Struktura koja sadrži IP adresu i port servera.
+    char buffer[MAX_BUFFER_SIZE];           // Bafer za prijem i slanje poruka.
+    int bytes_received;                     // Varijabla za broj bajtova koje je klijent primio od servera.
+    char message[MAX_BUFFER_SIZE];          // Bafer za naziv poruke.
+    int max_size;                           // Maksimalna veličina.
+
+    // Kreira UDP soket za komunikaciju sa serverom koristeći IPv4.
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (sockfd == INVALID_SOCKET) {
-        printf("Kreiranje soketa nije uspelo\n");
-        WSACleanup();
-        exit(EXIT_FAILURE);
+    if (sockfd == INVALID_SOCKET) {             // Ako soket nije uspešno kreiran, ispisuje grešku.
+        printf("Socket creation failed\n");
+        WSACleanup();                           // Čisti resurse Winsock-a.
+        exit(EXIT_FAILURE);                     // Izađe iz programa sa greškom.
     }
 
-    // Konfiguracija adrese servera
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(SERVER_PORT);
+    // Postavlja konfiguraciju servera
+    memset(&server_addr, 0, sizeof(server_addr));  // Postavlja sve vrednosti u strukturi `server_addr` na 0.
+    server_addr.sin_family = AF_INET;            // Postavlja tip adresiranja na IPv4.
+    server_addr.sin_port = htons(SERVER_PORT);  // Postavlja port servera (koristi htons da bi se port konvertovao u mrežni redosled bajtova).
 
-    // Pretvaranje IP adrese u binarni oblik
+    // Pretvaranje IP adrese u binarni oblik.
     if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
-        printf("Neispravna IP adresa\n");
-        closesocket(sockfd);
-        WSACleanup();
-        exit(EXIT_FAILURE);
+        printf("Invalid IP address\n");           // Ako IP adresa nije validna, ispisuje grešku.
+        closesocket(sockfd);                     // Zatvara soket.
+        WSACleanup();                            // Čisti resurse Winsock-a.
+        exit(EXIT_FAILURE);                      // Izađe iz programa sa greškom.
     }
 
-    // Slanje poruke serveru
-    printf("Unesite poruku za slanje serveru: ");
-    fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0'; // Uklanjanje znaka za novi red
+    // Startuje petlju koja omogućava višekratno slanje poruka serveru.
+    while (1) {
+        // Unos naziva poruke.
+        printf("Enter the name of publisher to send to the server: ");
+        fgets(message, sizeof(message), stdin);     // Unos naziva sa tastature.
+        message[strcspn(message, "\n")] = '\0';     // Uklanja znak za novi red sa kraja stringa.
 
-    sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+        // Ako korisnik unese 'exit', prekida petlju i zatvara klijenta.
+        if (strcmp(message, "exit") == 0) {
+            printf("Exiting client...\n");
+            break;                                    // Izađe iz petlje i zatvori program.
+        }
 
-    // Prijem odgovora od servera
-    int bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-    if (bytes_received == SOCKET_ERROR) {
-        printf("recvfrom nije uspeo\n");
-        closesocket(sockfd);
-        WSACleanup();
-        exit(EXIT_FAILURE);
+        // Unos maksimalne veličine.
+        printf("Enter the max size: ");
+        scanf_s("%d", &max_size);                      // Unos maksimalne veličine.
+        getchar();                                    // Uklanja znak za novi red koji ostaje nakon unosa broja.
+
+        // Kombinovanje naziva i maksimalne veličine u jedan string za slanje.
+        snprintf(buffer, sizeof(buffer), "id=%s|naziv=%s|maxsize=%d", "12345", message, max_size);  // Spajanje naziva i maksimalne veličine sa separatorom '|'.
+
+        // Šalje poruku serveru.
+        sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+        // Prijem odgovora od servera.
+        bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+        if (bytes_received == SOCKET_ERROR) {            // Ako prijem podataka ne uspe.
+            printf("recvfrom failed\n");
+            closesocket(sockfd);                        // Zatvara soket.
+            WSACleanup();                               // Čisti resurse Winsock-a.
+            exit(EXIT_FAILURE);                         // Izađe iz programa sa greškom.
+        }
+
+        buffer[bytes_received] = '\0';                   // Dodaje NULL karakter na kraj primljene poruke.
+        printf("Received from server: %s\n", buffer);     // Ispisuje odgovor servera na ekran.
     }
 
-    buffer[bytes_received] = '\0'; // Zavr�avanje primljene poruke
-    printf("Primljeno od servera: %s\n", buffer);
-
-    // Zatvaranje soketa
+    // Zatvara soket.
     closesocket(sockfd);
-    WSACleanup();
+    WSACleanup();                                        // Čisti resurse Winsock-a.
 
     return 0;
 }

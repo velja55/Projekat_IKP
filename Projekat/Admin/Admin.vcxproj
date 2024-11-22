@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="HashSetForSubscribers.h" />
     <ClInclude Include="LinkedList.h" />
+    <ClInclude Include="Queue.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

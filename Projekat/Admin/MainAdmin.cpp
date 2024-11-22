@@ -3,6 +3,7 @@
 #include <string.h>
 #include <winsock2.h>
 #include <windows.h>
+#include <ws2tcpip.h>  // For inet_ntop
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT 12345
@@ -14,28 +15,68 @@ typedef struct {
     int addr_len;
 } client_data_t;
 
-// Funkcija niti za obradu klijenta
-DWORD WINAPI handle_client(LPVOID arg) {
+// Funkcija za parsiranje poruke
+void parse_message(char* buffer, struct sockaddr_in* client_addr) {
+    char* token;
+    char id[16], naziv[MAX_BUFFER_SIZE], maxsize[16];
+    char* context;  // Context za strtok_s
+
+    // Prvi token je ID (port)
+    token = strtok_s(buffer, "|", &context);
+    if (token != NULL) {
+        sscanf_s(token, "id=%s", id, sizeof(id));
+    }
+
+    // Drugi token je naziv
+    token = strtok_s(NULL, "|", &context);
+    if (token != NULL) {
+        sscanf_s(token, "naziv=%s", naziv, sizeof(naziv));
+    }
+
+    // Treći token je maxsize
+    token = strtok_s(NULL, "|", &context);
+    if (token != NULL) {
+        sscanf_s(token, "maxsize=%s", maxsize, sizeof(maxsize));
+    }
+
+    // Ispis informacija
+    printf("Received message details:\n");
+    printf("ID (Port) of sender: %s\n", id);
+    printf("Naziv: %s\n", naziv);
+    printf("Maxsize: %s\n", maxsize);
+
+    // Ispisivanje informacija o izvoru poruke (IP adresa i port)
+    char client_ip[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &client_addr->sin_addr, client_ip, sizeof(client_ip)) == NULL) {
+        printf("inet_ntop failed\n");
+    }
+    else {
+        printf("Message received from IP: %s, Port: %d\n", client_ip, ntohs(client_addr->sin_port));
+    }
+}
+
+// Thread function to handle a client
+DWORD WINAPI handle_client(LPVOID arg) {  //nit za prihvat publishera
     client_data_t* data = (client_data_t*)arg;
     char buffer[MAX_BUFFER_SIZE];
     int bytes_received;
 
-    // Prijem podataka od klijenta
+    // Receiving data from the client
     bytes_received = recvfrom(data->sockfd, buffer, MAX_BUFFER_SIZE, 0, (struct sockaddr*)&data->client_addr, &data->addr_len);
     if (bytes_received == SOCKET_ERROR) {
-        printf("recvfrom nije uspeo\n");
+        printf("recvfrom failed\n");
         free(data);
         return 1;
     }
 
-    // Završavanje stringa
+    // Null-terminate the string
     buffer[bytes_received] = '\0';
 
-    printf("Poruka primljena: %s\n", buffer);
+    // Print received message and client information (IP and port)
+    parse_message(buffer, &data->client_addr);
 
-    // Opcionalno: slanje odgovora klijentu
-    const char* response = "Poruka primljena";
-    sendto(data->sockfd, response, strlen(response), 0, (struct sockaddr*)&data->client_addr, data->addr_len);
+    // Sending the response to the client
+    sendto(data->sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&data->client_addr, data->addr_len);
 
     free(data);
     return 0;
@@ -46,60 +87,60 @@ int main() {
     SOCKET sockfd;
     struct sockaddr_in server_addr;
 
-    // Inicijalizacija Winsock-a
+    // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        printf("WSAStartup nije uspeo\n");
+        printf("WSAStartup failed\n");
         return 1;
     }
 
-    // Kreiranje UDP soketa
+    // Create a UDP socket
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sockfd == INVALID_SOCKET) {
-        printf("Kreiranje soketa nije uspelo\n");
+        printf("Socket creation failed\n");
         WSACleanup();
         return 1;
     }
 
-    // Konfiguracija server adrese
+    // Postavljamo konfiguraciju servera
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(PORT);
 
-    // Povezivanje soketa sa adresom
+    // Bind the socket to the address
     if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
-        printf("Bind nije uspeo\n");
+        printf("Bind failed\n");
         closesocket(sockfd);
         WSACleanup();
         return 1;
     }
 
-    printf("Server je pokrenut na portu %d...\n", PORT);
+    printf("Server is running on port %d...\n", PORT);
 
-    // Glavna petlja servera
+    // Kreiramo petlju za višekratno prihvatanje poruka
     while (1) {
         client_data_t* data = (client_data_t*)malloc(sizeof(client_data_t));
         if (data == NULL) {
-            printf("Alokacija memorije nije uspela\n");
+            printf("Memory allocation failed\n");
             continue;
         }
 
-        // Postavljanje osnovnih podataka za klijenta
+        // Set up client data
         data->sockfd = sockfd;
         data->addr_len = sizeof(data->client_addr);
 
-        // Kreiranje niti za obradu klijenta
+        // Create a thread to handle the client
         HANDLE thread_handle = CreateThread(
-            NULL,               // Podrazumevana sigurnosna atributa
-            0,                  // Podrazumevana veličina steka
-            handle_client,      // Funkcija niti
-            (LPVOID)data,       // Argument za nit
-            0,                  // Bez posebnih atributa prilikom kreiranja
-            NULL                // ID niti nije potreban
+            NULL,               // Default security attributes
+            0,                  // Default stack size
+            handle_client,      // Thread function
+            (LPVOID)data,       // Argument for the thread
+            0,                  // Default creation flags
+            NULL                // Thread ID not needed
         );
 
         if (thread_handle == NULL) {
-            printf("CreateThread nije uspeo\n");
+            printf("CreateThread failed\n");
             free(data);
         }
         else {
@@ -107,7 +148,7 @@ int main() {
         }
     }
 
-    // Čišćenje resursa
+    // Cleanup resources
     closesocket(sockfd);
     WSACleanup();
     return 0;
