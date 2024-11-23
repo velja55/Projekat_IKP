@@ -124,14 +124,18 @@ void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET
 
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
     if (publisherNode == NULL) {
-        printf("Publisher not found. Adding a new one.\n");
-        addPublisher(hashSet, publisherKey, 10);
-        publisherNode = findPublisherNode(hashSet, publisherKey);
+        printf("Error: Publisher with key %d not found. Cannot add subscriber %d.\n", publisherKey, subscriberKey);
+        LeaveCriticalSection(&hashSet->criticalSection);
+        return;
     }
 
     add(&publisherNode->subscribers, subscriberKey, subscriberSocket);
+
+    printf("Subscriber %d added to publisher %d successfully.\n", subscriberKey, publisherKey);
+
     LeaveCriticalSection(&hashSet->criticalSection);
 }
+
 
 // Function to remove a subscriber from a publisher's list
 void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey) {
@@ -198,4 +202,27 @@ void printHashSet(HashSet* hashSet) {
     }
 
     LeaveCriticalSection(&hashSet->criticalSection);
+}
+
+
+int* getAllPublisherIDs(HashSet* hashSet) {
+    EnterCriticalSection(&hashSet->criticalSection);
+
+    int* publisherIDs = (int*)malloc(hashSet->size * sizeof(int));
+    if (!publisherIDs) {
+        LeaveCriticalSection(&hashSet->criticalSection);
+        return NULL;
+    }
+
+    size_t index = 0;
+    for (size_t i = 0; i < hashSet->capacity; i++) {
+        HashNode* current = hashSet->buckets[i];
+        while (current) {
+            publisherIDs[index++] = current->key; // Add publisher ID to array
+            current = current->next;
+        }
+    }
+
+    LeaveCriticalSection(&hashSet->criticalSection);
+    return publisherIDs;
 }

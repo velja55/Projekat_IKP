@@ -32,5 +32,6 @@ void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey);
 LinkedList* getSubscribers(HashSet* hashSet, int publisherKey);
 void freeHashSet(HashSet* hashSet);
 void printHashSet(HashSet* hashSet);
+int* getAllPublisherIDs(HashSet* hashSet);
 
 #endif

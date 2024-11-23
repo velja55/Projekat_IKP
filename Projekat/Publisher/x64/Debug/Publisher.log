@@ -1,3 +1,3 @@
 ﻿  MainPublisher.cpp
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(69,38): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  Publisher.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Publisher.exe
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(69,38): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Publisher.vcxproj -> C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\x64\Debug\Publisher.exe
