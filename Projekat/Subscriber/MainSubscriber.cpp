@@ -29,13 +29,31 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     sendto(serverSocket, "get_publishers", strlen("get_publishers"), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
     // Receive the list of publishers ->maybe problem with buffer size on Subscriber if there are too many publishers
-    int received = recvfrom(serverSocket, buffer, sizeof(buffer),0, NULL,NULL );
+  /*  int received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
     if (received <= 0) {
         printf("Error: Failed to receive data from server.\n");
         return;
     }
     buffer[received] = '\0';
+    printf("Available Publishers:\n%s\n", buffer);*/
+    int received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+    if (received <= 0) {
+        printf("Error: Failed to receive data from server.\n");
+        return;
+    }
+    buffer[received] = '\0';  // Završavanje stringa
+
+    // Ispis primljenih podataka
     printf("Available Publishers:\n%s\n", buffer);
+    /*
+    // Parsiranje CSV stringa i prikaz ID-ova
+    char* context; // Context za strtok_s
+    char* token = strtok_s(buffer, ",", &context);
+    while (token != NULL) {
+        printf("Publisher ID: %s\n", token);
+        token = strtok_s(NULL, ",", &context);
+    }*/
+
 
     // Let the user choose a publisher to subscribe to
     printf("Enter the ID of the publisher to subscribe to (or -1 to quit): ");

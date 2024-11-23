@@ -102,6 +102,7 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
     return 0;
 }
 
+/*
 //do ovde sve dobro uradi
 void sendPublisherIDsToSubscriber(SOCKET subscriberSocket, int* publisherIDs, size_t count, struct sockaddr_in* clientAddr) {
     if (!publisherIDs || count == 0) {
@@ -117,6 +118,41 @@ void sendPublisherIDsToSubscriber(SOCKET subscriberSocket, int* publisherIDs, si
     }
     else {
         printf("Sent %zu publisher IDs to subscriber\n", count);
+    }
+}
+*/
+
+void sendPublisherIDsToSubscriber(SOCKET subscriberSocket, int* publisherIDs, size_t count, struct sockaddr_in* clientAddr) {
+    if (!publisherIDs || count == 0) {
+        const char* errorMsg = "No publishers available";
+        sendto(subscriberSocket, errorMsg, strlen(errorMsg), 0, (struct sockaddr*)clientAddr, sizeof(*clientAddr));
+        return;
+    }
+
+    // Konvertovanje niza ID-ova u string (CSV format)
+    char buffer[MAX_BUFFER_SIZE];
+    int offset = 0;
+
+    for (size_t i = 0; i < count; i++) {
+        offset += snprintf(buffer + offset, MAX_BUFFER_SIZE - offset, "%d,", publisherIDs[i]);
+        if (offset >= MAX_BUFFER_SIZE) {
+            printf("Error: Buffer overflow while serializing publisher IDs\n");
+            return;
+        }
+    }
+
+    // Ukloni poslednji zarez
+    if (count > 0) {
+        buffer[offset - 1] = '\0';
+    }
+
+    // Pošalji serijalizovane podatke klijentu
+    int bytesSent = sendto(subscriberSocket, buffer, strlen(buffer), 0, (struct sockaddr*)clientAddr, sizeof(*clientAddr));
+    if (bytesSent == SOCKET_ERROR) {
+        printf("Failed to send publisher IDs to subscriber\n");
+    }
+    else {
+        printf("Sent %zu publisher IDs to subscriber: %s\n", count, buffer);
     }
 }
 
@@ -144,8 +180,9 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
         if (strncmp(buffer, "get_publishers", 14) == 0) {
             // Gather publisher IDs
             int* publisherIDs = getAllPublisherIDs(glavniHashSet);
+        
             if (publisherIDs) {
-                sendPublisherIDsToSubscriber(subscriberSocket, publisherIDs, glavniHashSet->size, &clientAddr);
+                sendPublisherIDsToSubscriber(subscriberSocket,publisherIDs, glavniHashSet->size, &clientAddr);
                 free(publisherIDs); // Free allocated memory
             }
             else {
