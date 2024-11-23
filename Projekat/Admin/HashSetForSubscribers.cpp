@@ -1,9 +1,8 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "LinkedList.h"
-
+#include <WinSock2.h>
+#include <windows.h>
 #include "HashSetForSubscribers.h"
 
 // Function to initialize the HashSet
@@ -15,36 +14,35 @@ void initHashSet(HashSet* hashSet) {
         printf("Error: Memory allocation failed.\n");
         exit(EXIT_FAILURE);
     }
+    InitializeCriticalSection(&hashSet->criticalSection); // Initialize Critical Section
 }
 
 // Hash function to map a key to a bucket
 unsigned int hashFunction(int key, size_t capacity) {
-    // FNV-1a Hashing Algorithm (a simple but effective string hashing method)
-    unsigned int hash = 2166136261u;  // FNV-1a initial prime number
-    hash ^= key & 0xFF;  // XOR the lower byte of the key
-    hash *= 16777619u;   // Multiply by a constant prime number
-    return hash % capacity;  // Return the hash value within the table capacity
+    unsigned int hash = 2166136261u;
+    hash ^= key & 0xFF;
+    hash *= 16777619u;
+    return hash % capacity;
 }
 
 // Function to find a publisher's node in the HashSet
-HashNode* findPublisherNode(HashSet* hashSet, int publisherKey) {                           
+HashNode* findPublisherNode(HashSet* hashSet, int publisherKey) {
     unsigned int hashIndex = hashFunction(publisherKey, hashSet->capacity);
-    HashNode* current = hashSet->buckets[hashIndex];                            //daje nam 'tacnu' lokaciju trazenog publishera ali moramo proveriti ako ima vise ulanacanih na tom mestu !
+    HashNode* current = hashSet->buckets[hashIndex];
     while (current != NULL) {
         if (current->key == publisherKey) {
-            return current;  // Publisher found
+            return current;
         }
         current = current->next;
     }
-    return NULL;  // Publisher not found
+    return NULL;
 }
 
-// Function to change the maximum size of the subscribers list for a publisher, SAmo se moze povecati velicina liste ne sme se smanjivati !!!
+// Function to change the maximum size of the subscribers list for a publisher
 void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMaxSize) {
-    // Find the publisher node in the hash set
+    EnterCriticalSection(&hashSet->criticalSection);
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
 
-    // If the publisher is found, update the maxSize of its subscriber list
     if (publisherNode != NULL) {
         publisherNode->subscribers.maxSize = newMaxSize;
         printf("Max size for publisher %d changed to %zu\n", publisherKey, newMaxSize);
@@ -52,18 +50,21 @@ void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMa
     else {
         printf("Publisher with key %d not found.\n", publisherKey);
     }
+    LeaveCriticalSection(&hashSet->criticalSection);
 }
 
-// Function to resize the HashSet    -> kada se hashset popuni onda cemo raditi resizovanje
+// Function to resize the HashSet
 void resizeHashSet(HashSet* hashSet) {
-    size_t newCapacity = hashSet->capacity * 2;     //za 2 put povecamo velicinu HashSet-a
+    EnterCriticalSection(&hashSet->criticalSection);
+
+    size_t newCapacity = hashSet->capacity * 2;
     HashNode** newBuckets = (HashNode**)calloc(newCapacity, sizeof(HashNode*));
     if (newBuckets == NULL) {
         printf("Error: Memory allocation failed during resizing.\n");
+        LeaveCriticalSection(&hashSet->criticalSection);
         return;
     }
 
-    // Rehash all nodes into the new table
     for (size_t i = 0; i < hashSet->capacity; i++) {
         HashNode* current = hashSet->buckets[i];
         while (current != NULL) {
@@ -76,148 +77,125 @@ void resizeHashSet(HashSet* hashSet) {
         }
     }
 
-    // Free old buckets and update the hash table
     free(hashSet->buckets);
     hashSet->buckets = newBuckets;
     hashSet->capacity = newCapacity;
 
     printf("HashSet resized to new capacity: %zu\n", newCapacity);
+    LeaveCriticalSection(&hashSet->criticalSection);
 }
 
-
+// Function to add a publisher to the HashSet
 void addPublisher(HashSet* hashSet, int publisherID, size_t maxSize) {
-    // Check if resizing is needed due to the load factor
+    EnterCriticalSection(&hashSet->criticalSection);
+
     if ((float)(hashSet->size + 1) / hashSet->capacity > LOAD_FACTOR_THRESHOLD) {
         resizeHashSet(hashSet);
     }
 
-
-
-    // Calculate the hash index for the given publisher ID
     unsigned int hashIndex = hashFunction(publisherID, hashSet->capacity);
-
-    // Proverimo da li postoji publisher sa ISTIM ID ako postoji ne mozemo ga ubaciti (ovo nema veze sa kolizijom !)
-    HashNode* existingNode = findPublisherNode(hashSet, publisherID);
-    if (existingNode != NULL) {
-        printf("Publisher with ID %d already exists in the hash set.\n", publisherID);
+    if (findPublisherNode(hashSet, publisherID) != NULL) {
+        printf("Publisher with ID %d already exists.\n", publisherID);
+        LeaveCriticalSection(&hashSet->criticalSection);
         return;
     }
 
-    // Create a new HashNode for the publisher
     HashNode* newNode = (HashNode*)malloc(sizeof(HashNode));
     if (newNode == NULL) {
-        printf("Error: Memory allocation failed for new publisher.\n");
+        printf("Error: Memory allocation failed.\n");
+        LeaveCriticalSection(&hashSet->criticalSection);
         return;
     }
 
-    // Initialize the new publisher node
     newNode->key = publisherID;
-    initList(&newNode->subscribers);   // Initialize the linked list
-    newNode->subscribers.maxSize = maxSize; // Set the max size for the linked list
+    initList(&newNode->subscribers);
+    newNode->subscribers.maxSize = maxSize;
+    newNode->next = hashSet->buckets[hashIndex];
+    hashSet->buckets[hashIndex] = newNode;
+    hashSet->size++;
 
-
-
-    // Collision Handling (Separate Chaining):
-    // Insert the new node at the head of the linked list at the calculated hash index
-    newNode->next = hashSet->buckets[hashIndex]; // newNode points to the current head of the list              |Novi| --->|Prethodni HashNode 2|  ---> |Prethodni(prvi) hashNode1| -- >NULL  ULANCAVANJE
-    hashSet->buckets[hashIndex] = newNode;      // newNode becomes the new head of the list        buckets[hashIndex] = novi !
-
-
-    hashSet->size++; // Increment the hash set size
-
-    printf("Publisher with ID %d added successfully with max subscriber size %zu.\n", publisherID, maxSize);
+    printf("Publisher with ID %d added successfully.\n", publisherID);
+    LeaveCriticalSection(&hashSet->criticalSection);
 }
 
-
-
 // Function to add a subscriber to a publisher's list
-void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket) {                    //NE VALJA ! 
-    // Resize if load factor exceeds the threshold
-    //if ((float)(hashSet->size + 1) / hashSet->capacity > LOAD_FACTOR_THRESHOLD) {
-    //    resizeHashSet(hashSet);
-    //}
+void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket) {
+    EnterCriticalSection(&hashSet->criticalSection);
 
-    //unsigned int hashIndex = hashFunction(publisherKey, hashSet->capacity);
+    HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
+    if (publisherNode == NULL) {
+        printf("Publisher not found. Adding a new one.\n");
+        addPublisher(hashSet, publisherKey, 10);
+        publisherNode = findPublisherNode(hashSet, publisherKey);
+    }
 
-    //// Find publisher's node in the hash table
-    //HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
-    //if (publisherNode == NULL) {
-    //    // If the publisher doesn't exist, create a new node
-    //    publisherNode = (HashNode*)malloc(sizeof(HashNode));
-    //    if (publisherNode == NULL) {
-    //        printf("Error: Memory allocation failed.\n");
-    //        return;
-    //    }
-    //    publisherNode->key = publisherKey;
-    //    initList(&publisherNode->subscribers);
-    //    publisherNode->next = hashSet->buckets[hashIndex];
-    //    hashSet->buckets[hashIndex] = publisherNode;  // Insert at the head of the bucket
-    //    hashSet->size++;
-    //}
-
-    //// Add the subscriber to the publisher's list
-    //add(&publisherNode->subscribers, subscriberKey, subscriberSocket);
+    add(&publisherNode->subscribers, subscriberKey, subscriberSocket);
+    LeaveCriticalSection(&hashSet->criticalSection);
 }
 
 // Function to remove a subscriber from a publisher's list
 void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey) {
+    EnterCriticalSection(&hashSet->criticalSection);
+
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
     if (publisherNode != NULL) {
         removeElement(&publisherNode->subscribers, subscriberKey);
     }
+
+    LeaveCriticalSection(&hashSet->criticalSection);
 }
 
 // Function to get the subscriber list for a publisher
 LinkedList* getSubscribers(HashSet* hashSet, int publisherKey) {
+    EnterCriticalSection(&hashSet->criticalSection);
+
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
     if (publisherNode != NULL) {
+        LeaveCriticalSection(&hashSet->criticalSection);
         return &publisherNode->subscribers;
     }
-    return NULL;  // Publisher not found
+
+    LeaveCriticalSection(&hashSet->criticalSection);
+    return NULL;
 }
-
-void printHashSet(HashSet* hashSet) {
-    // Loop through all the buckets in the hash set
-    for (size_t i = 0; i < hashSet->capacity; i++) {
-        // Get the current bucket (linked list of HashNode)
-        HashNode* currentNode = hashSet->buckets[i];
-
-        if (currentNode != NULL) {
-            printf("Bucket %zu:\n", i);  // Print the bucket index
-
-            // Traverse the linked list at this bucket
-            while (currentNode != NULL) {
-                printf("  Publisher ID: %d\n", currentNode->key);  // Print publisher ID
-                printf("    Max subscribers: %zu\n", currentNode->subscribers.maxSize); // Print max subscribers
-
-                // Print the list of subscribers
-                printf("    Subscribers:\n");
-                Node* subscriber = currentNode->subscribers.head; // Start at the head of the subscriber list
-                while (subscriber != NULL) {
-                    printf("      Subscriber ID: %d ", subscriber->key);  // Print subscriber info
-                    subscriber = subscriber->next;  // Move to the next subscriber in the list
-                }
-
-                currentNode = currentNode->next;  // Move to the next node in the bucket (if any)
-            }
-        }
-    }
-}
-
 
 // Function to free the entire HashSet
 void freeHashSet(HashSet* hashSet) {
+    EnterCriticalSection(&hashSet->criticalSection);
+
     for (size_t i = 0; i < hashSet->capacity; i++) {
         HashNode* current = hashSet->buckets[i];
         while (current != NULL) {
             HashNode* temp = current;
             current = current->next;
-            freeList(&temp->subscribers);  // Free the subscribers list
+            freeList(&temp->subscribers);
             free(temp);
         }
     }
     free(hashSet->buckets);
-    hashSet->buckets = NULL;
-    hashSet->capacity = 0;
-    hashSet->size = 0;
+    DeleteCriticalSection(&hashSet->criticalSection);
+}
+
+// Function to print the HashSet
+void printHashSet(HashSet* hashSet) {
+    EnterCriticalSection(&hashSet->criticalSection);
+
+    for (size_t i = 0; i < hashSet->capacity; i++) {
+        HashNode* current = hashSet->buckets[i];
+        if (current != NULL) {
+            printf("Bucket %zu:\n", i);
+            while (current != NULL) {
+                printf("  Publisher ID: %d\n", current->key);
+                printf("    Max subscribers: %zu\n", current->subscribers.maxSize);
+                Node* subscriber = current->subscribers.head;
+                while (subscriber != NULL) {
+                    printf("      Subscriber ID: %d\n", subscriber->key);
+                    subscriber = subscriber->next;
+                }
+                current = current->next;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&hashSet->criticalSection);
 }

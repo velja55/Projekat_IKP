@@ -1,7 +1,4 @@
 ﻿  MainAdmin.cpp
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(33,25): warning C4477: 'sscanf_s' : format string '%s' requires an argument of type 'unsigned int', but variadic argument 2 has type 'size_t'
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(40,25): warning C4477: 'sscanf_s' : format string '%s' requires an argument of type 'unsigned int', but variadic argument 2 has type 'size_t'
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(46,25): warning C4477: 'sscanf_s' : format string '%s' requires an argument of type 'unsigned int', but variadic argument 2 has type 'size_t'
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(99,22): warning C4477: 'sscanf_s' : format string '%zu' requires an argument of type 'unsigned __int64 *', but variadic argument 4 has type 'int *'
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(110,48): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-  Admin.vcxproj -> C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(94,48): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(135,46): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Admin.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
