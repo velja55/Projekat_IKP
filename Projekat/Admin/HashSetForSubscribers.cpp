@@ -187,7 +187,7 @@ void printHashSet(HashSet* hashSet) {
     for (size_t i = 0; i < hashSet->capacity; i++) {
         HashNode* current = hashSet->buckets[i];
         if (current != NULL) {
-            printf("Bucket %zu:\n", i);
+            printf("Bucket %d:\n", i);
             while (current != NULL) {
                 printf("  Publisher ID: %d\n", current->key);
                 printf("    Max subscribers: %zu\n", current->subscribers.maxSize);
