@@ -7,6 +7,129 @@
 #define MAX_BUFFER_SIZE 1024         // Definiše maksimalnu veličinu bafera (1024 bajta) za prijem i slanje podataka.
 #define SERVER_PORT 12345            // Definiše port na kojem server komunicira sa klijentima (UDP port 12345).
 
+// Struktura za prosleđivanje parametara u nit
+typedef struct {
+    SOCKET sockfd;
+    struct sockaddr_in server_addr;
+    int maxSize;
+    char publisherName[MAX_BUFFER_SIZE];
+} ThreadParams;
+
+// Funkcija za kontinuirano slanje novih poruka serveru
+DWORD WINAPI send_continuous_messages(LPVOID param) {
+    ThreadParams* params = (ThreadParams*)param;
+    SOCKET sockfd = params->sockfd;
+    struct sockaddr_in server_addr = params->server_addr;
+    char message[MAX_BUFFER_SIZE];
+    char buffer[MAX_BUFFER_SIZE];
+    int bytes_received;
+
+    while (1) {
+        printf("Enter a message to send (or 'exit' to quit): ");
+        fgets(message, sizeof(message), stdin);
+        message[strcspn(message, "\n")] = '\0';  // Uklanja novi red sa kraja
+
+        if (strcmp(message, "exit") == 0) {
+            printf("Exiting message sender...\n");
+            break;  // Napušta petlju i završava nit
+        }
+
+        // Kombinovanje naziva i poruke u string za slanje
+        snprintf(buffer, sizeof(buffer), "operacija=2|publisher=%s|message=%s", params->publisherName, message);
+
+        // Slanje poruke serveru
+        sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+        // Prijem odgovora od servera
+        bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+        if (bytes_received == SOCKET_ERROR) {
+            printf("recvfrom failed\n");
+            break;
+        }
+
+        buffer[bytes_received] = '\0';  // Dodaje NULL karakter na kraj primljene poruke
+        printf("Received from server: %s\n", buffer);
+    }
+
+    free(params); // Oslobađa memoriju alociranu za parametre
+    return 0;
+}
+
+// Funkcija za slanje inicijalne poruke serveru
+DWORD WINAPI send_message(LPVOID param) {
+    SOCKET sockfd = *(SOCKET*)param;
+    struct sockaddr_in server_addr;
+    char buffer[MAX_BUFFER_SIZE];
+    char message[MAX_BUFFER_SIZE];
+    int max_size;
+    int bytes_received;
+
+    // Konfiguracija servera
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+
+    if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
+        printf("Invalid IP address\n");
+        closesocket(sockfd);
+        return 1;
+    }
+
+    // Unos naziva publisher-a
+    printf("Enter the name of publisher to send to the server: ");
+    fgets(message, sizeof(message), stdin);
+    message[strcspn(message, "\n")] = '\0';
+
+    // Ako je uneseno 'exit', zatvaramo klijenta
+    if (strcmp(message, "exit") == 0) {
+        printf("Exiting client...\n");
+        return 1;
+    }
+
+    // Unos maksimalne veličine
+    printf("Enter the max size: ");
+    scanf_s("%d", &max_size);
+    getchar();  // Uklanja znak za novi red iz input buffer-a
+
+    // Kombinovanje podataka u poruku za slanje
+    snprintf(buffer, sizeof(buffer), "operacija=1|publisher=%s|maxsize=%d", message, max_size);
+
+    // Slanje inicijalne poruke serveru
+    sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+    // Prijem odgovora od servera
+    bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+    if (bytes_received == SOCKET_ERROR) {
+        printf("recvfrom failed\n");
+        closesocket(sockfd);
+        return 1;
+    }
+
+    buffer[bytes_received] = '\0';
+    printf("Received from server: %s\n", buffer);
+
+    // Kreiranje nove niti za kontinuirano slanje poruka
+    ThreadParams* params = (ThreadParams*)malloc(sizeof(ThreadParams));
+    params->sockfd = sockfd;
+    params->server_addr = server_addr;
+    params->maxSize = max_size;
+    strcpy_s(params->publisherName, message);
+
+    HANDLE continuousThread = CreateThread(
+        NULL, 0, send_continuous_messages, params, 0, NULL);
+
+    if (continuousThread == NULL) {
+        printf("Failed to create continuous message thread\n");
+        free(params);
+    }
+    else {
+        WaitForSingleObject(continuousThread, INFINITE);
+        CloseHandle(continuousThread);
+    }
+
+    return 0;
+}
+
 int main() {
     WSADATA wsaData;                    // Struktura koja sadrži informacije o Winsock verziji i drugim podešavanjima.
 
@@ -17,12 +140,6 @@ int main() {
     }
 
     SOCKET sockfd;                         // Definiše soket za komunikaciju (UDP socket).
-    struct sockaddr_in server_addr;         // Struktura koja sadrži IP adresu i port servera.
-    char buffer[MAX_BUFFER_SIZE];           // Bafer za prijem i slanje poruka.
-    int bytes_received;                     // Varijabla za broj bajtova koje je klijent primio od servera.
-    char message[MAX_BUFFER_SIZE];          // Bafer za naziv poruke.
-    int max_size;                           // Maksimalna veličina.
-
     // Kreira UDP soket za komunikaciju sa serverom koristeći IPv4.
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sockfd == INVALID_SOCKET) {             // Ako soket nije uspešno kreiran, ispisuje grešku.
@@ -31,55 +148,25 @@ int main() {
         exit(EXIT_FAILURE);                     // Izađe iz programa sa greškom.
     }
 
-    // Postavlja konfiguraciju servera
-    memset(&server_addr, 0, sizeof(server_addr));  // Postavlja sve vrednosti u strukturi `server_addr` na 0.
-    server_addr.sin_family = AF_INET;            // Postavlja tip adresiranja na IPv4.
-    server_addr.sin_port = htons(SERVER_PORT);  // Postavlja port servera (koristi htons da bi se port konvertovao u mrežni redosled bajtova).
+    // Kreiraj nit koja će slati poruke serveru
+    HANDLE sendThread = CreateThread(
+        NULL,                // Bez posebnih atributa
+        0,                   // Veličina stoga niti (0 znači sistemska vrednost)
+        send_message,        // Funkcija koja će biti pozvana unutar nove niti
+        &sockfd,             // Parametar za nit (soket)
+        0,                   // Flags (0 znači normalno pokretanje)
+        NULL                 // Povratni identifikator niti
+    );
 
-    // Pretvaranje IP adrese u binarni oblik.
-    if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
-        printf("Invalid IP address\n");           // Ako IP adresa nije validna, ispisuje grešku.
-        closesocket(sockfd);                     // Zatvara soket.
-        WSACleanup();                            // Čisti resurse Winsock-a.
-        exit(EXIT_FAILURE);                      // Izađe iz programa sa greškom.
+    if (sendThread == NULL) {
+        printf("Failed to create send thread\n");
+        closesocket(sockfd);
+        WSACleanup();
+        return 1;
     }
 
-    // Startuje petlju koja omogućava višekratno slanje poruka serveru.
-    while (1) {
-        // Unos naziva poruke.
-        printf("Enter the name of publisher to send to the server: ");
-        fgets(message, sizeof(message), stdin);     // Unos naziva sa tastature.
-        message[strcspn(message, "\n")] = '\0';     // Uklanja znak za novi red sa kraja stringa.
-
-        // Ako korisnik unese 'exit', prekida petlju i zatvara klijenta.
-        if (strcmp(message, "exit") == 0) {
-            printf("Exiting client...\n");
-            break;                                    // Izađe iz petlje i zatvori program.
-        }
-
-        // Unos maksimalne veličine.
-        printf("Enter the max size: ");
-        scanf_s("%d", &max_size);                      // Unos maksimalne veličine.
-        getchar();                                    // Uklanja znak za novi red koji ostaje nakon unosa broja.
-
-        // Kombinovanje naziva i maksimalne veličine u jedan string za slanje.
-        snprintf(buffer, sizeof(buffer), "id=%d|naziv=%s|maxsize=%d", ntohs(((struct sockaddr_in*)&server_addr)->sin_port), message, max_size);
-
-        // Šalje poruku serveru.
-        sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
-
-        // Prijem odgovora od servera.
-        bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-        if (bytes_received == SOCKET_ERROR) {            // Ako prijem podataka ne uspe.
-            printf("recvfrom failed\n");
-            closesocket(sockfd);                        // Zatvara soket.
-            WSACleanup();                               // Čisti resurse Winsock-a.
-            exit(EXIT_FAILURE);                         // Izađe iz programa sa greškom.
-        }
-
-        buffer[bytes_received] = '\0';                   // Dodaje NULL karakter na kraj primljene poruke.
-        printf("Received from server: %s\n", buffer);     // Ispisuje odgovor servera na ekran.
-    }
+    // Čekanje da se nit završi (nije obavezno, možeš dodati čekanje u zavisnosti od implementacije)
+    WaitForSingleObject(sendThread, INFINITE);
 
     // Zatvara soket.
     closesocket(sockfd);

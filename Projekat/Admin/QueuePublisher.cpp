@@ -1,57 +1,109 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
-#include "Queue.h"
+#include <string.h>
 
+#define INITIAL_CAPACITY 4         // Initial queue capacity
+#define MAX_MESSAGE_SIZE 256       // Maximum message size
+
+// Queue structure definition
+typedef struct {
+    int* idPublishers;  // Array to store publisher IDs
+    char** messages;    // Array of strings to store messages
+    int capacity;       // Current capacity of the queue
+    int front;          // Index of the front element
+    int rear;           // Index of the rear element
+    int size;           // Current size of the queue
+} Queue;
+
+// Function to initialize the queue
 void initQueue(Queue* queue) {
-    queue->front = NULL;
-    queue->rear = NULL;
+    queue->capacity = INITIAL_CAPACITY;
+    queue->idPublishers = (int*)malloc(queue->capacity * sizeof(int));
+    queue->messages = (char**)malloc(queue->capacity * sizeof(char*));
+    for (int i = 0; i < queue->capacity; i++) {
+        queue->messages[i] = (char*)malloc(MAX_MESSAGE_SIZE * sizeof(char));
+    }
+    queue->front = 0;
+    queue->rear = -1;
     queue->size = 0;
 }
 
-void enqueue(Queue* queue, int idPublisher, int newMaxSize) {
-    QueueNode* newNode = (QueueNode*)malloc(sizeof(QueueNode));
-    if (newNode == NULL) {
-        printf("Error: Memory allocation failed.\n");
-        return;
+// Function to expand the queue's capacity when it's full
+void expandQueue(Queue* queue) {
+    int newCapacity = queue->capacity * 2;
+    int* newIdPublishers = (int*)malloc(newCapacity * sizeof(int));
+    char** newMessages = (char**)malloc(newCapacity * sizeof(char*));
+
+    for (int i = 0; i < newCapacity; i++) {
+        newMessages[i] = (char*)malloc(MAX_MESSAGE_SIZE * sizeof(char));
     }
-    newNode->idPublisher = idPublisher;
-    newNode->newMaxSize = newMaxSize;
-    newNode->next = NULL;
-    if (queue->rear == NULL) {
-        queue->front = newNode;
-        queue->rear = newNode;
+
+    // Copy elements from old queue to new one
+    for (int i = 0; i < queue->size; i++) {
+        int index = (queue->front + i) % queue->capacity;
+        newIdPublishers[i] = queue->idPublishers[index];
+        snprintf(newMessages[i], MAX_MESSAGE_SIZE, "%s", queue->messages[index]);
     }
-    else {
-        queue->rear->next = newNode;
-        queue->rear = newNode;
+
+    // Free old memory
+    free(queue->idPublishers);
+    for (int i = 0; i < queue->capacity; i++) {
+        free(queue->messages[i]);
     }
+    free(queue->messages);
+
+    // Update queue to use new memory
+    queue->idPublishers = newIdPublishers;
+    queue->messages = newMessages;
+    queue->capacity = newCapacity;
+    queue->front = 0;
+    queue->rear = queue->size - 1;
+}
+
+// Function to add an element to the queue (enqueue)
+void enqueue(Queue* queue, int idPublisher, const char* message) {
+    if (queue->size == queue->capacity) {
+        expandQueue(queue);  // Expand queue if it's full
+    }
+
+    queue->rear = (queue->rear + 1) % queue->capacity;
+    queue->idPublishers[queue->rear] = idPublisher;
+
+    // Safely copy the message using snprintf
+    snprintf(queue->messages[queue->rear], MAX_MESSAGE_SIZE, "%s", message);
+
     queue->size++;
 }
 
-int dequeue(Queue* queue, int* idPublisher, int* newMaxSize) {
-    if (queue->front == NULL) {
+// Function to remove an element from the queue (dequeue)
+int dequeue(Queue* queue, int* idPublisher, char* message) {
+    if (queue->size == 0) {
         printf("Error: Queue is empty.\n");
         return -1;
     }
-    QueueNode* temp = queue->front;
-    *idPublisher = temp->idPublisher;
-    *newMaxSize = temp->newMaxSize;
-    queue->front = queue->front->next;
-    if (queue->front == NULL) {
-        queue->rear = NULL;
-    }
-    free(temp);
+
+    *idPublisher = queue->idPublishers[queue->front];
+
+    // Safely copy the message using snprintf
+    snprintf(message, MAX_MESSAGE_SIZE, "%s", queue->messages[queue->front]);
+
+    queue->front = (queue->front + 1) % queue->capacity;
     queue->size--;
+
     return 0;
 }
 
+// Function to check if the queue is empty
 int isQueueEmpty(Queue* queue) {
     return (queue->size == 0);
 }
 
+// Function to free the memory allocated by the queue
 void freeQueue(Queue* queue) {
-    while (!isQueueEmpty(queue)) {
-        int idPublisher, newMaxSize;
-        dequeue(queue, &idPublisher, &newMaxSize);
+    free(queue->idPublishers);
+    for (int i = 0; i < queue->capacity; i++) {
+        free(queue->messages[i]);
     }
+    free(queue->messages);
 }
+
