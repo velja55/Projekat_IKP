@@ -8,7 +8,7 @@
 // Maksimalna veličina poruke
 #define MAX_MESSAGE_SIZE 256
 
-// Početni kapacitet reda
+// Početni kapacitet reda KAD SE ISTESTIRA POVECA|Ti
 #define INITIAL_CAPACITY 4
 
 // Struktura za čvor reda
@@ -39,4 +39,5 @@ void expandQueue(Queue* queue);
 // Funkcija za oslobađanje memorije reda
 void freeQueue(Queue* queue);
 
+void printQueue(const Queue* queue);
 #endif // QUEUE_H

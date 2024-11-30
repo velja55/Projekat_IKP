@@ -6,6 +6,7 @@
 #include <ws2tcpip.h>  // For inet_ntop
 
 #include "HashSetForSubscribers.h"
+#include "Queue.h" 
 
 #define MAX_BUFFER_SIZE 1024
 #define PUBLISHER_PORT 12345
@@ -14,6 +15,10 @@
 
 HashSet* glavniHashSet;
 CRITICAL_SECTION criticalSection;
+Queue* queueZaPoruke;
+HANDLE hSemaphore;
+
+
 
 
 // Struktura za prosleđivanje podataka nitima
@@ -23,13 +28,34 @@ typedef struct {
     int addr_len;
 } client_data_t;
 
+
+
+//DWORD WINAPI WorkerFunction(LPVOID lpParam) {
+//    while (1) {
+//        // Wait for the semaphore to be released (signal from the main thread)
+//        WaitForSingleObject(hSemaphore, INFINITE);
+//
+//        // Process the message from the queue (ensure thread-safe access)
+//        int publisherID;
+//        char* message = (char*)malloc(256 * sizeof(char));
+//        if (dequeue(queueZaPoruke, &publisherID, message) == 0) {
+//            // Assuming sendToSubscribers sends the message to all subscribers
+//           // sendToSubscribers(publisherID, message);  // Implement this function to send to subscribers
+//            printf("Worker: Processing message from Publisher %d: %s\n", publisherID, message);
+//        }
+//        free(message);  // Free memory allocated for the message
+//    }
+//    return 0;
+//}
+
 // Funkcija za parsiranje poruke
 // Function to parse the message and extract ID, naziv, and maxsize
-void parse_message(char* buffer,int* operacija, int* id, size_t* maxSize, struct sockaddr_in* client_addr) {
-    char id_str[16], maxsize_str[16],operacija_str[16];
+void parse_message(char* buffer, int* operacija, int* id, size_t* maxSize, char* poruka, struct sockaddr_in* client_addr) {
+    char id_str[16], maxsize_str[16], operacija_str[16];
+    char poruka_str[256];  // Bafer za poruku sada ima dovoljno prostora
     char* context;  // Context for strtok_s
 
-    // Prvi token je br funkcije(da li je prijava ili normalna poruka)
+    // Prvi token je operacija (da li je prijava ili normalna poruka)
     char* token = strtok_s(buffer, "|", &context);
 
     if (token != NULL) {
@@ -37,30 +63,43 @@ void parse_message(char* buffer,int* operacija, int* id, size_t* maxSize, struct
         *operacija = atoi(operacija_str);
     }
 
-
-    // First token is ID (port)
-     token = strtok_s(NULL, "|", &context);
+    // Drugi token je ID (port)
+    token = strtok_s(NULL, "|", &context);
 
     if (token != NULL) {
         sscanf_s(token, "id=%15s", id_str, (unsigned)_countof(id_str));
-        *id = ntohs(client_addr->sin_port);
+        *id = ntohs(client_addr->sin_port);  // Pretpostavljam da ovde koristiš port klijenta
     }
 
-
-    // Third token is maxsize
+    // Treći token je maxsize ili poruka
     token = strtok_s(NULL, "|", &context);
-    if (token != NULL) {
-        sscanf_s(token, "maxsize=%15s", maxsize_str, (unsigned)_countof(maxsize_str));
-        *maxSize = (size_t)atoi(maxsize_str); // Convert to size_t
+    if (*operacija == 1) {
+        if (token != NULL) {
+            sscanf_s(token, "maxsize=%15s", maxsize_str, (unsigned)_countof(maxsize_str));
+            *maxSize = (size_t)atoi(maxsize_str); // Pretvaranje u size_t
+        }
+        poruka[0] = '\0';  // Nema poruke u ovom slučaju
+    }
+    else {
+        if (token != NULL) {
+            sscanf_s(token, "message=%255s", poruka_str, (unsigned)_countof(poruka_str));  // Čitanje poruke
+            strcpy_s(poruka, 256, poruka_str);  // Kopiranje poruke
+            *maxSize = 0;  // Postavljamo maxSize na 0 jer nije relevantno za operaciju 2
+        }
     }
 
-    // Print received details
+    // Ispis primljenih detalja
     printf("Received message details:\n");
     printf("Operacija: %d\n", *operacija);
     printf("ID (Port): %d\n", *id);
-    printf("MaxSize: %zu\n", *maxSize);
+    if (*operacija == 1) {
+        printf("MaxSize: %zu\n", *maxSize);
+    }
+    else {
+        printf("Message: %s\n", poruka);
+    }
 
-    // Print source information (IP address and port)
+    // Ispis informacija o izvoru poruke (IP adresa i port)
     char client_ip[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &client_addr->sin_addr, client_ip, sizeof(client_ip)) == NULL) {
         printf("inet_ntop failed\n");
@@ -95,10 +134,17 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
         int flag;
         int publisherID;
         size_t maxSize;
-        parse_message(buffer,&flag, &publisherID, &maxSize, &client_addr);
+        char* poruka = (char*)malloc(256 * sizeof(char));
+        parse_message(buffer,&flag, &publisherID, &maxSize,poruka, &client_addr);
 
-        addPublisher(glavniHashSet, publisherID, maxSize);              //critical section je u funckiji
-
+        if (flag == 1) {
+            addPublisher(glavniHashSet, publisherID, maxSize);              //critical section je u funckiji
+            printHashSet(glavniHashSet);
+        }
+        else {
+            enqueue(queueZaPoruke, publisherID, poruka);
+            printQueue(queueZaPoruke);
+        }
         // Send acknowledgment back to the client
         sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
 
@@ -215,19 +261,12 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
             int bytesSent = sendto(subscriberSocket, notificationMessage, strlen(notificationMessage), 0,
                 (struct sockaddr*)&publisherAddr, sizeof(publisherAddr));
 
-            if (bytesSent == SOCKET_ERROR) {
-                printf("Failed to notify Publisher %d about Subscriber %d\n", publisherID, subscriberID);
-            }
-            else {
-                printf("Notified Publisher %d about new Subscriber %d\n", publisherID, subscriberID);
-            }
-
             // Acknowledge subscription
             sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
             printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
 
-            // Print the entire hash set
             printHashSet(glavniHashSet);
+
         }
         else {
             printf("Unknown subscriber request: %s\n", buffer);
@@ -250,11 +289,13 @@ int main() {
 
     // Initialize the HashSet
     glavniHashSet = (HashSet*)malloc(sizeof(HashSet));
+    queueZaPoruke = (Queue*)malloc(sizeof(Queue));
     if (glavniHashSet == NULL) {
         printf("Error: Memory allocation failed for glavniHashSet.\n");
         return EXIT_FAILURE;
     }
     initHashSet(glavniHashSet);
+    initQueue(queueZaPoruke);
 
     // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -340,8 +381,12 @@ int main() {
         return 1;
     }
 
-    WaitForSingleObject(publisher_thread, INFINITE);
 
+
+
+
+
+    WaitForSingleObject(publisher_thread, INFINITE);
     WaitForSingleObject(subscriberThread, INFINITE);
 
 
@@ -360,7 +405,10 @@ int main() {
 
     // Free the HashSet when done
     freeHashSet(glavniHashSet);
+    freeQueue(queueZaPoruke);
     free(glavniHashSet);
+    free(queueZaPoruke);
+    
 
     return 0;
 }

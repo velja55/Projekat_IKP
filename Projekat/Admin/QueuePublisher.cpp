@@ -1,19 +1,11 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define INITIAL_CAPACITY 4         // Initial queue capacity
+#include "Queue.h"
+#define INITIAL_CAPACITY 20         // Initial queue capacity
 #define MAX_MESSAGE_SIZE 256       // Maximum message size
 
-// Queue structure definition
-typedef struct {
-    int* idPublishers;  // Array to store publisher IDs
-    char** messages;    // Array of strings to store messages
-    int capacity;       // Current capacity of the queue
-    int front;          // Index of the front element
-    int rear;           // Index of the rear element
-    int size;           // Current size of the queue
-} Queue;
+
 
 // Function to initialize the queue
 void initQueue(Queue* queue) {
@@ -106,4 +98,26 @@ void freeQueue(Queue* queue) {
     }
     free(queue->messages);
 }
+
+
+// Function to print the elements of the queue
+void printQueue(const Queue* queue) {
+    if (queue->size == 0) {
+        printf("Queue is empty.\n");
+        return;
+    }
+
+    printf("Queue contents:\n");
+    printf("-----------------------------\n");
+    printf("| %-10s | %-20s |\n", "PublisherID", "Message");
+    printf("-----------------------------\n");
+
+    for (int i = 0; i < queue->size; i++) {
+        int index = (queue->front + i) % queue->capacity;
+        printf("| %-10d | %-20s |\n", queue->idPublishers[index], queue->messages[index]);
+    }
+
+    printf("-----------------------------\n");
+}
+
 
