@@ -10,16 +10,16 @@ void initList(LinkedList* list) {
 }
 
 // Funkcija za dodavanje parova ključ-vrednost u listu (ključ, socket, adresa)
-void add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr) {
+bool add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr) {
     if (list->size == list->maxSize) {
-        printf("Max Size liste je dostignut. Nije moguće dodati pretplatnika za ovog izdavača.\n");
-        return;
+        printf("Max Size liste je dostignut. Nije moguce dodati pretplatnika za ovog izdavaca.\n");
+        return false;
     }
 
     Node* newNode = (Node*)malloc(sizeof(Node));
     if (newNode == NULL) {
         printf("Greška pri alokaciji memorije.\n");
-        return;
+        return false;
     }
 
     newNode->key = key;
@@ -29,10 +29,12 @@ void add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr) {
     list->head = newNode;        // Postavljanje novog čvora kao glave liste
     list->size++;
 
-    printf("Pretplatnik sa ID %d uspešno dodat.\n", key);
+    printf("Pretplatnik sa ID %d uspesno dodat.\n", key);
+
+    return true;
 }
 
-// Funkcija za proveru da li lista sadrži određeni ključ
+// Funkcija za proveru da li lista sadrži određeno subscribera
 int contains(LinkedList* list, int key) {
     Node* current = list->head;
     while (current != NULL) {
@@ -55,9 +57,28 @@ SOCKET get(LinkedList* list, int key) {
     }
     return INVALID_SOCKET;  // Ako ključ nije pronađen
 }
+//funk za dobijanje adrese sub-a
+sockaddr_in getAddr(LinkedList* list, int key) {
+    Node* current = list->head;
+    while (current != NULL) {
+        if (current->key == key) {
+            return current->addr;  // Vraća adresu za pronađeni 
+        }
+        current = current->next;
+    }
+
+    // Return a default sockaddr_in with invalid values
+    sockaddr_in invalidAddr;
+    memset(&invalidAddr, 0, sizeof(invalidAddr));  // Zero out the structure
+    return invalidAddr;  // Return an invalid address
+
+
+}
+
+
 
 // Funkcija za uklanjanje parova ključ-vrednost iz liste
-void removeElement(LinkedList* list, int key) {
+bool removeElement(LinkedList* list, int key) {
     Node* current = list->head;
     Node* previous = NULL;
 
@@ -73,12 +94,13 @@ void removeElement(LinkedList* list, int key) {
             free(current);  // Oslobađanje memorije čvora
             list->size--;
             printf("Pretplatnik sa ID %d je uklonjen.\n", key);
-            return;
+            return true;
         }
         previous = current;
         current = current->next;
     }
     printf("Pretplatnik sa ID %d nije pronađen.\n", key);
+    return false;
 }
 
 // Funkcija za oslobađanje resursa liste

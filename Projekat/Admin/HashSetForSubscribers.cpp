@@ -29,7 +29,7 @@ unsigned int hashFunction(int key, size_t capacity) {
 HashNode* findPublisherNode(HashSet* hashSet, int publisherKey) {
     unsigned int hashIndex = hashFunction(publisherKey, hashSet->capacity);
     HashNode* current = hashSet->buckets[hashIndex];
-    while (current != NULL) {
+    while (current != NULL) {                                                           //zbog ulancavanja na istom indeexu moramo proci kroz ulancane sve da proverimo da li to taj id
         if (current->key == publisherKey) {
             return current;
         }
@@ -119,35 +119,90 @@ void addPublisher(HashSet* hashSet, int publisherID, size_t maxSize) {
 }
 
 // Function to add a subscriber to a publisher's list
-void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket, struct sockaddr_in addr) {
+bool addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket, struct sockaddr_in addr) {
     EnterCriticalSection(&hashSet->criticalSection);
 
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
     if (publisherNode == NULL) {
         printf("Error: Publisher with key %d not found. Cannot add subscriber %d.\n", publisherKey, subscriberKey);
         LeaveCriticalSection(&hashSet->criticalSection);
-        return;
+        return false;
     }
 
-    add(&publisherNode->subscribers, subscriberKey, subscriberSocket,addr);
+    //proveravmo da li dodajemo istog subscribra na istog publsihera
 
-    printf("Subscriber %d added to publisher %d successfully.\n", subscriberKey, publisherKey);
+    int odgovor = contains(&publisherNode->subscribers, subscriberKey);
+    if (odgovor == 1)
+    {
+        printf("Can't Add Subsriber to same Publisher 2 times \n");
+        LeaveCriticalSection(&hashSet->criticalSection);
+        return false;
+    }
 
-    LeaveCriticalSection(&hashSet->criticalSection);
+
+    if (add(&publisherNode->subscribers, subscriberKey, subscriberSocket, addr) == true) {
+        LeaveCriticalSection(&hashSet->criticalSection);
+        return true;
+
+    }
+    else {
+        LeaveCriticalSection(&hashSet->criticalSection);
+        return false;
+    }
+
+   // printf("Subscriber %d added to publisher %d successfully.\n", subscriberKey, publisherKey);   vec ispisujemo u listi da je uspesno dodat
+
 }
 
 
 // Function to remove a subscriber from a publisher's list
-void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey) {
+bool removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey) {
     EnterCriticalSection(&hashSet->criticalSection);
 
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
     if (publisherNode != NULL) {
-        removeElement(&publisherNode->subscribers, subscriberKey);
+        if (removeElement(&publisherNode->subscribers, subscriberKey) == true) {
+            LeaveCriticalSection(&hashSet->criticalSection);
+            //ne mora ovde printf vec ga imamo u listi
+            return true;
+        }
+        else {
+            LeaveCriticalSection(&hashSet->criticalSection);
+            return false;
+        }
+    }
+    else {
+        //ne postoji publisher
+
+        printf("Publisher with that ID doesnt exist \n");
+        LeaveCriticalSection(&hashSet->criticalSection);
+        return false;
+
+    }
+
+}
+
+HashNode* findPublisherNodeBySubscriberID(HashSet* hashSet, int subscriberID) {
+    EnterCriticalSection(&hashSet->criticalSection);
+    // Iterate through all buckets in the hash set
+    for (size_t i = 0; i < hashSet->capacity; ++i) {
+        HashNode* current = hashSet->buckets[i];
+
+        // Iterate through all publishers in the current bucket
+        while (current != NULL) {
+            // Check if the subscriber exists in the current publisher's subscribers list
+            if (contains(&current->subscribers, subscriberID) ==1) {
+                LeaveCriticalSection(&hashSet->criticalSection);
+                return current; // Return the HashNode where the subscriber is found
+            }
+            current = current->next; // Move to the next HashNode in the list
+        }
     }
 
     LeaveCriticalSection(&hashSet->criticalSection);
+    return NULL; // Return NULL if the subscriber with the given ID was not found
 }
+
 
 // Function to get the subscriber list for a publisher
 LinkedList* getSubscribers(HashSet* hashSet, int publisherKey) {
@@ -162,6 +217,8 @@ LinkedList* getSubscribers(HashSet* hashSet, int publisherKey) {
     LeaveCriticalSection(&hashSet->criticalSection);
     return NULL;
 }
+
+ 
 
 // Function to free the entire HashSet
 void freeHashSet(HashSet* hashSet) {

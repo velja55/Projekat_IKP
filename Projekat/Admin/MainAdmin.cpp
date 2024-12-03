@@ -14,7 +14,7 @@
 #define SUBSCRIBER_PORT 12346
 #define THREAD_POOL_SIZE 4 
 HashSet* glavniHashSet;
-CRITICAL_SECTION criticalSection;
+CRITICAL_SECTION criticalSection;           //ovaj kritical sektion msm da ni ne koristimo
 Queue* queueZaPoruke;
 
 
@@ -98,6 +98,196 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
     }
     return 0;
 }
+DWORD WINAPI admin_console_thread(LPVOID arg) {
+    int command;
+
+    printf("Admin Console Started. Type a number for commands:\n");
+    printf("  1 - List all active publishers\n");                                       //kada se doda publisher pise Operacija1 to je kontrola dole  u onom threadu ako je uspesno dodat nema veze sa ovim
+    printf("  2 - Change Publishers Max Size for Subscribers\n");
+    printf("  3 - Add Subscriber to a Publisher\n");                                    //vec postojeceg subscribera(da je na nekog subsribovan) dodajemo takodje drugom publisheru
+    printf("  4 - Remove Subscriber from Publisher\n");
+    printf("  5 - Shut down the server\n");
+
+    while (1) {
+        printf(">> ");
+
+        // Read command and handle non-integer inputs
+        if (scanf_s("%d", &command) != 1) {                                             //scanf_s ima problema ko unesemo slovo umesto broja za komandu
+            // If scanf_s failed (invalid input like a letter), clear the input buffer and ask again
+            while (getchar() != '\n'); // Clear the input buffer
+            printf("Invalid input. Please enter a valid number (1, 2, or 3):\n");
+            continue; // Skip this iteration and prompt the user again
+        }
+
+        if (command==1) {
+            if (glavniHashSet->size == 0)
+                printf("There are no Publishers \n");
+            else
+                printf("Listing all active publishers:\n");
+                printHashSet(glavniHashSet); // A function you define to display publishers
+        }
+        else if (command == 2) {
+            int publisherID = -1;
+            int maxSize = -1;
+            //NIJE URADJENO DA SE JAVI PUBLISHERU DA MU JE PROMENJEN MAX_SIZE
+            printf("Enter Publisher's ID: ");
+            while (scanf_s("%d", &publisherID) != 1 || publisherID < 0) {
+                // Clear the invalid input
+                while (getchar() != '\n');
+                printf("Invalid input. Please enter a positive integer for Publisher's ID: ");
+            }
+
+            printf("Enter new size (0-100): ");
+            while (scanf_s("%d", &maxSize) != 1 || maxSize < 0 || maxSize > 100) {
+                // Clear the invalid input
+                while (getchar() != '\n');
+                printf("Invalid input. Please enter a number between 0 and 100 for size: ");
+            }
+
+
+            changeMaxSizeofSubscribers(glavniHashSet, publisherID, maxSize);
+        }
+        else if (command == 3)
+        {
+            int publisherID = -1;
+            int subsriberID = -1;
+
+            printf("Enter Subscriber's ID: ");
+            while (scanf_s("%d", &subsriberID) != 1 || subsriberID < 0) {
+                // Clear the invalid input
+                while (getchar() != '\n');
+                printf("Invalid input. Please enter a positive integer for subsriberID's ID: ");
+            }
+
+            printf("Enter Publisher's ID:");
+            while (scanf_s("%d", &publisherID) != 1 || publisherID < 0) {
+                // Clear the invalid input
+                while (getchar() != '\n');
+                printf("Invalid input. Please enter a positive integer for Publisher's ID: ");
+            }
+
+            //vec subsrajbovanog sub-a treba subsrajbovati na RAZLICITOG publishera
+
+            //proverimo da li publisher na kog subsrajbujemo uopste postoji
+            HashNode* pom = findPublisherNode(glavniHashSet, publisherID);
+
+            if (pom == NULL)
+            {
+                printf("Publisher with that ID doesnt exist \n");
+                continue;
+            }
+
+            //pretrazimo sve hashnodove i trazimo da li taj subscriber postoji
+            HashNode* subsCurrentHashNode = findPublisherNodeBySubscriberID(glavniHashSet, subsriberID);
+
+            if (subsCurrentHashNode == NULL)
+            {
+                printf("Subscriber with that ID doesnt exist\n");
+                continue;
+            }
+
+            //ovde izvlacim socket od postojeceg suba- mozda je OVDE GRESKA MOZDA
+            SOCKET subSocket = contains(&subsCurrentHashNode->subscribers, subsriberID);
+
+            if (subSocket == INVALID_SOCKET)
+            {
+                printf("Subscriber with that ID doesnt exist \n");
+                continue;
+
+            }
+
+            //treba nam i adresa od subscribera
+
+            sockaddr_in subAddr = getAddr(&subsCurrentHashNode->subscribers, subsriberID);
+            if (subAddr.sin_addr.s_addr == 0) {
+                printf("Invalid address for subscriber ID %d\n", subsriberID);
+                continue;
+                    
+            }
+
+            //ovde je provera dal ga dodaje na isti publisher
+            addSubscriber(glavniHashSet,publisherID, subsriberID, subSocket, subAddr);
+
+        
+        }
+        else if (command == 4)
+        {
+            int publisherID = -1;
+            int subsriberID = -1;
+            printf("Enter Subscriber's ID: ");
+            while (scanf_s("%d", &subsriberID) != 1 || subsriberID < 0) {
+                // Clear the invalid input
+                while (getchar() != '\n');
+                printf("Invalid input. Please enter a positive integer for subsriberID's ID: ");
+            }
+
+            printf("Enter Publisher's ID:");
+            while (scanf_s("%d", &publisherID) != 1 || publisherID < 0) {
+                // Clear the invalid input
+                while (getchar() != '\n');
+                printf("Invalid input. Please enter a positive integer for Publisher's ID: ");
+            }
+
+            //ovo mi treba samo da bi poslao poruku posle subscriberu da je admin odjavio
+            HashNode* pom = findPublisherNode(glavniHashSet, publisherID);
+
+            if (pom == NULL)
+            {
+                printf("Publisher with that ID doesnt exist \n");
+                continue;
+            }
+
+            //pretrazimo sve hashnodove i trazimo da li taj subscriber postoji
+            HashNode* subsCurrentHashNode = findPublisherNodeBySubscriberID(glavniHashSet, subsriberID);
+
+            if (subsCurrentHashNode == NULL)
+            {
+                printf("Subscriber with that ID doesnt exist\n");
+                continue;
+            }
+
+            SOCKET subSocket = contains(&subsCurrentHashNode->subscribers, subsriberID);
+
+            if (subSocket == INVALID_SOCKET)
+            {
+                printf("Subscriber with that ID doesnt exist \n");
+                continue;
+
+            }
+
+            //treba nam i adresa od subscribera
+
+            sockaddr_in subAddr = getAddr(&subsCurrentHashNode->subscribers, subsriberID);
+            if (subAddr.sin_addr.s_addr == 0) {
+                printf("Invalid address for subscriber ID %d\n", subsriberID);
+                continue;
+
+            }
+            int addrLen = sizeof(subAddr);
+
+            
+            sendto(subSocket, "Unsubscribed by ADMIN", strlen("Unsubscribed by ADMIN"), 0, (struct sockaddr*)&subAddr, addrLen);
+
+            removeSubscriber(glavniHashSet, publisherID, subsriberID);              //dobro radi removovanje i dobro prezmu socket i adresu ali nece da se posalje poruka subssrajberu da je skinut
+
+        }
+        else if (command == 5) {                               //Ovo treba da uradimo tako da se svi threadovi notifikuje tipa sa globalnim bool-om, i onda kod workera npr while(shutdown!=true) da radi thread
+            printf("Initiating graceful shutdown...\n");
+            // Signal other threads to stop and clean up resources
+            //initiate_shutdown(); // Define this function to handle cleanup
+            
+            
+            //break; // Exit the loop to stop the thread
+        }
+        else {
+            printf("Unknown command. Please type 1, 2, or 3 for available commands.\n");
+            
+        }
+    }
+
+    //return 0;
+}
+
 
 
 
@@ -312,16 +502,31 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
         else if (strncmp(buffer, "subscribe:", 10) == 0) {
             int publisherID = atoi(buffer + 10);
             int subscriberID = ntohs(clientAddr.sin_port);
-            addSubscriber(glavniHashSet, publisherID, subscriberID, subscriberSocket, clientAddr);
-            sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
-            printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
+            if (addSubscriber(glavniHashSet, publisherID, subscriberID, subscriberSocket, clientAddr) == true) {
+                sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
+            }
+            else {
+                sendto(subscriberSocket, "Not Able to Subscribe", strlen("Not Able to Subscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                printf("Subscriber %d failed to Subscribe to Publisher %d\n", subscriberID, publisherID);
+
+            }
+
         }
         else if (strncmp(buffer, "unsubscribe:", 12) == 0) {
             int publisherID = atoi(buffer + 12);
             int subscriberID = ntohs(clientAddr.sin_port);
-            removeSubscriber(glavniHashSet, publisherID, subscriberID);
-            sendto(subscriberSocket, "Unsubscribed", strlen("Unsubscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
-            printf("Subscriber %d removed from Publisher %d\n", subscriberID, publisherID);
+            if (removeSubscriber(glavniHashSet, publisherID, subscriberID) == true)
+            {
+                sendto(subscriberSocket, "Unsubscribed", strlen("Unsubscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                printf("Subscriber %d removed from Publisher %d\n", subscriberID, publisherID);
+            }
+            else {
+                sendto(subscriberSocket, "Unable to unsubscribe", strlen("Unable to unsubscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                printf("Subscriber %d was unable to unsubscribe from Publisher %d\n", subscriberID, publisherID);
+
+            }
+
         }
         else {
             printf("Unknown subscriber request: %s\n", buffer);
@@ -424,9 +629,14 @@ int main() {
         0,
         NULL
     );
-
+    //ne treba ovde cistiti threadPool jel se skroz dole inicijalizuje ovde bi trebalo ocistiti kriticnu sekciju i strukture
     if (publisher_thread == NULL) {
         printf("Failed to create processing thread\n");
+        DeleteCriticalSection(&criticalSection);            //ovaj critical sectiom msm da nigde ne koristimo, vec imamo onaj unutar dictioanry vec napravljen
+        freeHashSet(glavniHashSet);
+        freeQueue(queueZaPoruke);
+        free(glavniHashSet);
+        free(queueZaPoruke);
         closesocket(publisherSocket);
         closesocket(subscriberSocket);
         WSACleanup();
@@ -438,16 +648,44 @@ int main() {
 
     if (subscriberThread == NULL) {
         printf("Failed to create Subscriber thread\n");
+        DeleteCriticalSection(&criticalSection);
+        // Free the HashSet when done
+        freeHashSet(glavniHashSet);
+        freeQueue(queueZaPoruke);
+        free(glavniHashSet);
+        free(queueZaPoruke);
         closesocket(publisherSocket);
         closesocket(subscriberSocket);
         WSACleanup();
         return 1;
     }
+
+    //thread za console interakciju sa adminom
+    HANDLE adminThread = CreateThread(NULL, 0, admin_console_thread, NULL, 0, NULL);
+    if (adminThread == NULL) {
+        DeleteCriticalSection(&criticalSection);
+        // Free the HashSet when done
+        freeHashSet(glavniHashSet);
+        freeQueue(queueZaPoruke);
+        free(glavniHashSet);
+        free(queueZaPoruke);
+        closesocket(publisherSocket);
+        closesocket(subscriberSocket);
+        WSACleanup();        
+        return 1;
+    }
+
     InitializeThreadPool();
+    //ovi waitovi cekaju dok se ne zavrse operacije threadova kada se svi zavrse onda se inicijalizuje cleanpu closeHandle itd...
     WaitForSingleObject(publisher_thread, INFINITE);
     WaitForSingleObject(subscriberThread, INFINITE);
+
+    // Wait for admin thread to finish
+    WaitForSingleObject(adminThread, INFINITE);
+
     CloseHandle(publisher_thread);
     CloseHandle(subscriberThread);
+    CloseHandle(adminThread);
     CloseThreadPool();
     // Cleanup resources
     closesocket(publisherSocket);

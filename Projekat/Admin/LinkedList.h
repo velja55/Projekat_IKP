@@ -21,8 +21,8 @@ typedef struct LinkedList {
 // Funkcija za inicijalizaciju liste
 void initList(LinkedList* list);
 
-// Funkcija za dodavanje parova ključ-vrednost u listu
-void add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr);
+// Funkcija za dodavanje parova ključ-vrednost u listu           mora bool da bi znali da li je uspesno ili nije i posle da bi slali subscriberu odgovarajucu poruku
+bool add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr);
 
 // Funkcija za proveru da li lista sadrži određeni ključ
 int contains(LinkedList* list, int key);
@@ -30,8 +30,10 @@ int contains(LinkedList* list, int key);
 // Funkcija za dobijanje socket-a na osnovu ključa
 SOCKET get(LinkedList* list, int key);
 
+sockaddr_in getAddr(LinkedList* list, int key);
+
 // Funkcija za uklanjanje parova ključ-vrednost iz liste
-void removeElement(LinkedList* list, int key);
+bool removeElement(LinkedList* list, int key);
 
 // Funkcija za oslobađanje resursa liste
 void freeList(LinkedList* list);

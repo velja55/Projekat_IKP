@@ -27,11 +27,13 @@ HashNode* findPublisherNode(HashSet* hashSet, int publisherKey);
 void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMaxSize);
 void resizeHashSet(HashSet* hashSet);
 void addPublisher(HashSet* hashSet, int publisherID, size_t maxSize);
-void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket, struct sockaddr_in addr);
-void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey);
+bool addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket, struct sockaddr_in addr);
+bool removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey);
 LinkedList* getSubscribers(HashSet* hashSet, int publisherKey);
 void freeHashSet(HashSet* hashSet);
 void printHashSet(HashSet* hashSet);
 int* getAllPublisherIDs(HashSet* hashSet);
+
+HashNode* findPublisherNodeBySubscriberID(HashSet* hashSet, int subscriberID);  // da vidimo da li id subscrajbera uopste postoji ako postoji vraca hashnode u kom se nalazi
 
 #endif

@@ -3,11 +3,14 @@
 #include <string.h>
 #include <WinSock2.h>
 #include <windows.h>
-#include <ws2tcpip.h>  // For inet_pton
+#include <ws2tcpip.h>
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 12346
 #define BUFFER_SIZE 1024
+
+// Global variable to stop receiving messages when the program exits
+int keepReceiving = 1;
 
 // Function to initialize WinSock
 void initializeWinSock() {
@@ -18,7 +21,28 @@ void initializeWinSock() {
     }
 }
 
-// Function to handle communication with the server
+// Function to handle continuous receiving of messages from publisher
+DWORD WINAPI receiveMessages(LPVOID param) {
+    SOCKET serverSocket = *(SOCKET*)param;
+    char buffer[BUFFER_SIZE];
+    int received;
+
+    while (keepReceiving) {
+        // Receive the server's message
+        received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+        if (received <= 0) {
+            printf("Error: Failed to receive message from server.\n");
+            return 0;
+        }
+        buffer[received] = '\0';  // Null-terminate the message
+
+        // Print the message from the publisher
+        printf("\nMessage from publisher: %s\n", buffer);
+    }
+
+    return 0;
+}
+
 // Function to handle communication with the server
 void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     char buffer[BUFFER_SIZE];
@@ -39,6 +63,13 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     // Print available publishers
     printf("Available Publishers:\n%s\n", buffer);
 
+    // Start a separate thread for receiving messages continuously
+    HANDLE receiverThread = CreateThread(NULL, 0, receiveMessages, &serverSocket, 0, NULL);
+    if (receiverThread == NULL) {
+        printf("Error: Failed to create receiver thread.\n");
+        return;
+    }
+
     while (1) {
         // Let the user choose an action
         printf("Choose an option:\n");
@@ -49,10 +80,9 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
         scanf_s("%d", &choice);
 
         if (choice == 3) {
+            keepReceiving = 0;  // Stop receiving messages
             break;
         }
-
-        
 
         if (choice == 1) {
             printf("Enter the ID of the publisher: ");
@@ -90,27 +120,18 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
 
             // Print server response
             printf("Server Response: %s\n", buffer);
+
+
         }
         else {
             printf("Invalid choice. Please try again.\n");
             continue;
         }
-
-        
-
-        if (choice == 1) {
-            // Wait for the server's message (subscription)
-            received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-            if (received <= 0) {
-                printf("Error: Failed to receive message from server.\n");
-                return;
-            }
-            buffer[received] = '\0';  // Null-terminate the message
-
-            // Print the message from the server
-            printf("Message from publisher: %s\n", buffer);
-        }
     }
+
+    // Wait for the receiver thread to finish
+    WaitForSingleObject(receiverThread, INFINITE);
+    CloseHandle(receiverThread);
 }
 
 
@@ -127,20 +148,17 @@ int main() {
 
     // Connect to the server
     struct sockaddr_in serverAddr;
-    memset(&serverAddr, 0, sizeof(serverAddr));  // Postavlja sve vrednosti u strukturi `server_addr` na 0.
-    serverAddr.sin_family = AF_INET;            // Postavlja tip adresiranja na IPv4.
-    serverAddr.sin_port = htons(SERVER_PORT);  // Postavlja port servera (koristi htons da bi se port konvertovao u mrežni redosled bajtova).
+    memset(&serverAddr, 0, sizeof(serverAddr));  // Set all values in `serverAddr` to 0.
+    serverAddr.sin_family = AF_INET;            // Set address family to IPv4.
+    serverAddr.sin_port = htons(SERVER_PORT);  // Set server port (using htons to convert to network byte order).
 
-
-    // Pretvaranje IP adrese u binarni oblik.
+    // Convert IP address to binary form
     if (inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr) <= 0) {
-        printf("Invalid IP address\n");           // Ako IP adresa nije validna, ispisuje grešku.
-        closesocket(clientSocket);                     // Zatvara soket.
-        WSACleanup();                            // Čisti resurse Winsock-a.
-        exit(EXIT_FAILURE);                      // Izađe iz programa sa greškom.
+        printf("Invalid IP address\n");
+        closesocket(clientSocket);
+        WSACleanup();
+        exit(EXIT_FAILURE);
     }
-
-
 
     printf("Connected to the server.\n");
 

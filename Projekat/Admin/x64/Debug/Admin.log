@@ -1,6 +1,11 @@
-﻿  LinkedList.cpp
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\LinkedList.cpp(15,16): warning C4566: character represented by universal-character-name '\u0107' cannot be represented in the current code page (1252)
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\LinkedList.cpp(15,16): warning C4566: character represented by universal-character-name '\u010D' cannot be represented in the current code page (1252)
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\LinkedList.cpp(81,12): warning C4566: character represented by universal-character-name '\u0111' cannot be represented in the current code page (1252)
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\LinkedList.cpp(95,12): warning C4566: character represented by universal-character-name '\u0111' cannot be represented in the current code page (1252)
-  Admin.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
+﻿  MainAdmin.cpp
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(57,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(269,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(404,46): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(439,50): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(461,60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(506,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(510,73): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(521,64): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(525,73): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Admin.vcxproj -> C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
