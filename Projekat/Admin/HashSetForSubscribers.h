@@ -27,7 +27,7 @@ HashNode* findPublisherNode(HashSet* hashSet, int publisherKey);
 void changeMaxSizeofSubscribers(HashSet* hashSet, int publisherKey, size_t newMaxSize);
 void resizeHashSet(HashSet* hashSet);
 void addPublisher(HashSet* hashSet, int publisherID, size_t maxSize);
-void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket);
+void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket, struct sockaddr_in addr);
 void removeSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey);
 LinkedList* getSubscribers(HashSet* hashSet, int publisherKey);
 void freeHashSet(HashSet* hashSet);

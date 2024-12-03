@@ -119,7 +119,7 @@ void addPublisher(HashSet* hashSet, int publisherID, size_t maxSize) {
 }
 
 // Function to add a subscriber to a publisher's list
-void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket) {
+void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET subscriberSocket, struct sockaddr_in addr) {
     EnterCriticalSection(&hashSet->criticalSection);
 
     HashNode* publisherNode = findPublisherNode(hashSet, publisherKey);
@@ -129,7 +129,7 @@ void addSubscriber(HashSet* hashSet, int publisherKey, int subscriberKey, SOCKET
         return;
     }
 
-    add(&publisherNode->subscribers, subscriberKey, subscriberSocket);
+    add(&publisherNode->subscribers, subscriberKey, subscriberSocket,addr);
 
     printf("Subscriber %d added to publisher %d successfully.\n", subscriberKey, publisherKey);
 

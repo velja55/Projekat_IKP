@@ -1,40 +1,39 @@
-﻿#ifndef LINKED_LIST_H
-#define LINKED_LIST_H
+﻿#ifndef LINKEDLIST_H
+#define LINKEDLIST_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <winsock2.h>
+#include <winsock2.h>  // For SOCKET and sockaddr_in
 
-// Structure to store key-value pairs (int as key, SOCKET as value)
+// Struktura za čvor u listi
 typedef struct Node {
-    int key;                // Key (ID of the subscriber)
-    SOCKET socket;          // Value (socket)
-    struct Node* next;      // Pointer to the next element in the list
+    int key;                 // Ključ
+    SOCKET socket;           // Socket za komunikaciju
+    struct sockaddr_in addr; // Adresa pretplatnika
+    struct Node* next;       // Sledeći čvor u listi
 } Node;
 
-// Structure for managing the linked list
-typedef struct {
-    Node* head;             // Pointer to the first element in the list
-    size_t size;            // Current number of elements in the list
-    size_t maxSize;         // Maximum size based on the publisher's maxSize
+// Struktura za listu
+typedef struct LinkedList {
+    Node* head;      // Početak liste
+    int size;        // Veličina liste
+    int maxSize;     // Maksimalni broj elemenata u listi
 } LinkedList;
 
-// Function to initialize the list
+// Funkcija za inicijalizaciju liste
 void initList(LinkedList* list);
 
-// Function to add key-value pairs to the list
-void add(LinkedList* list, int key, SOCKET socket);
+// Funkcija za dodavanje parova ključ-vrednost u listu
+void add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr);
 
-// Function to check if the list contains a specific key
+// Funkcija za proveru da li lista sadrži određeni ključ
 int contains(LinkedList* list, int key);
 
-// Function to get the socket based on the key
+// Funkcija za dobijanje socket-a na osnovu ključa
 SOCKET get(LinkedList* list, int key);
 
-// Function to remove key-value pairs from the list
+// Funkcija za uklanjanje parova ključ-vrednost iz liste
 void removeElement(LinkedList* list, int key);
 
-// Function to free the resources used by the list
+// Funkcija za oslobađanje resursa liste
 void freeList(LinkedList* list);
 
-#endif // LINKED_LIST_H
+#endif // LINKEDLIST_H

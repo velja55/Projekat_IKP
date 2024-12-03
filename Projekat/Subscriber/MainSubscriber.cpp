@@ -22,59 +22,94 @@ void initializeWinSock() {
 // Function to handle communication with the server
 void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     char buffer[BUFFER_SIZE];
-    int publisherID;
+    int publisherID, choice;
 
     // Request the list of publishers from the server
     printf("Requesting list of publishers...\n");
     sendto(serverSocket, "get_publishers", strlen("get_publishers"), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-    // Receive the list of publishers ->maybe problem with buffer size on Subscriber if there are too many publishers
-  /*  int received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-    if (received <= 0) {
-        printf("Error: Failed to receive data from server.\n");
-        return;
-    }
-    buffer[received] = '\0';
-    printf("Available Publishers:\n%s\n", buffer);*/
+    // Receive the list of publishers
     int received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
     if (received <= 0) {
         printf("Error: Failed to receive data from server.\n");
         return;
     }
-    buffer[received] = '\0';  // Završavanje stringa
+    buffer[received] = '\0';  // Null-terminate the string
 
-    // Ispis primljenih podataka
+    // Print available publishers
     printf("Available Publishers:\n%s\n", buffer);
-    /*
-    // Parsiranje CSV stringa i prikaz ID-ova
-    char* context; // Context za strtok_s
-    char* token = strtok_s(buffer, ",", &context);
-    while (token != NULL) {
-        printf("Publisher ID: %s\n", token);
-        token = strtok_s(NULL, ",", &context);
-    }*/
 
+    while (1) {
+        // Let the user choose an action
+        printf("Choose an option:\n");
+        printf("1. Subscribe to a publisher\n");
+        printf("2. Unsubscribe from a publisher\n");
+        printf("3. Quit\n");
+        printf("Enter your choice: ");
+        scanf_s("%d", &choice);
 
-    // Let the user choose a publisher to subscribe to
-    printf("Enter the ID of the publisher to subscribe to (or -1 to quit): ");
-    scanf_s("%d", &publisherID);
-
-    while (publisherID != -1) {
-        // Send subscription request to the server
-        sprintf_s(buffer, "subscribe: %d", publisherID);
-        sendto(serverSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-
-        // Receive the response from the server
-        received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-        if (received <= 0) {
-            printf("Error: Failed to receive data from server.\n");
-            return;
+        if (choice == 3) {
+            break;
         }
-        buffer[received] = '\0';
-        printf("Server Response: %s\n", buffer);
 
-        printf("Enter the ID of the publisher to subscribe to (or -1 to quit): ");
-        scanf_s("%d", &publisherID);
+        
+
+        if (choice == 1) {
+            printf("Enter the ID of the publisher: ");
+            scanf_s("%d", &publisherID);
+            // Send subscription request to the server
+            sprintf_s(buffer, "subscribe:%d", publisherID);
+            sendto(serverSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+            // Receive the server's response
+            received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (received <= 0) {
+                printf("Error: Failed to receive data from server.\n");
+                return;
+            }
+            buffer[received] = '\0';  // Null-terminate the response
+
+            // Print server response
+            printf("Server Response: %s\n", buffer);
+
+        }
+        else if (choice == 2) {
+            printf("Enter the ID of the publisher: ");
+            scanf_s("%d", &publisherID);
+            // Send unsubscription request to the server
+            sprintf_s(buffer, "unsubscribe:%d", publisherID);
+            sendto(serverSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+            // Receive the server's response
+            received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (received <= 0) {
+                printf("Error: Failed to receive data from server.\n");
+                return;
+            }
+            buffer[received] = '\0';  // Null-terminate the response
+
+            // Print server response
+            printf("Server Response: %s\n", buffer);
+        }
+        else {
+            printf("Invalid choice. Please try again.\n");
+            continue;
+        }
+
+        
+
+        if (choice == 1) {
+            // Wait for the server's message (subscription)
+            received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (received <= 0) {
+                printf("Error: Failed to receive message from server.\n");
+                return;
+            }
+            buffer[received] = '\0';  // Null-terminate the message
+
+            // Print the message from the server
+            printf("Message from publisher: %s\n", buffer);
+        }
     }
 }
 

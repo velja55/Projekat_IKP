@@ -1,6 +1,6 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "LinkedList.h"
 
 // Funkcija za inicijalizaciju liste
@@ -9,25 +9,27 @@ void initList(LinkedList* list) {
     list->size = 0;
 }
 
-// Funkcija za dodavanje parova ključ-vrednost u listu
-void add(LinkedList* list, int key, SOCKET socket) {
+// Funkcija za dodavanje parova ključ-vrednost u listu (ključ, socket, adresa)
+void add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr) {
+    if (list->size == list->maxSize) {
+        printf("Max Size liste je dostignut. Nije moguće dodati pretplatnika za ovog izdavača.\n");
+        return;
+    }
+
     Node* newNode = (Node*)malloc(sizeof(Node));
     if (newNode == NULL) {
         printf("Greška pri alokaciji memorije.\n");
         return;
     }
 
-    if (list->size == list->maxSize)
-    {
-        printf("Max Size liste je dostignut nije moguce dodati subscribera na ovog publishera");
-        return;
-    }
-
     newNode->key = key;
     newNode->socket = socket;
+    newNode->addr = addr;  // Čuvanje adrese pretplatnika
     newNode->next = list->head;  // Dodavanje na početak liste
     list->head = newNode;        // Postavljanje novog čvora kao glave liste
     list->size++;
+
+    printf("Pretplatnik sa ID %d uspešno dodat.\n", key);
 }
 
 // Funkcija za proveru da li lista sadrži određeni ključ
@@ -67,14 +69,16 @@ void removeElement(LinkedList* list, int key) {
             else {
                 previous->next = current->next;  // Preskače element
             }
-            closesocket(current->socket);  // Zatvaranje socket-a
-            free(current);
+            //closesocket(current->socket);  // Zatvaranje socket-a
+            free(current);  // Oslobađanje memorije čvora
             list->size--;
+            printf("Pretplatnik sa ID %d je uklonjen.\n", key);
             return;
         }
         previous = current;
         current = current->next;
     }
+    printf("Pretplatnik sa ID %d nije pronađen.\n", key);
 }
 
 // Funkcija za oslobađanje resursa liste
@@ -84,8 +88,9 @@ void freeList(LinkedList* list) {
         Node* temp = current;
         current = current->next;
         closesocket(temp->socket);  // Zatvori svaki socket
-        free(temp);
+        free(temp);  // Oslobađanje memorije čvora
     }
     list->head = NULL;
     list->size = 0;
+    printf("Lista je uspešno oslobođena.\n");
 }
