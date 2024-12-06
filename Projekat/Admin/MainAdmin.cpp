@@ -19,7 +19,6 @@ Queue* queueZaPoruke;
 
 
 
-
 // Struktura za prosleđivanje podataka nitima
 typedef struct {
     SOCKET sockfd;
@@ -98,6 +97,11 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
     }
     return 0;
 }
+
+
+
+
+
 DWORD WINAPI admin_console_thread(LPVOID arg) {
     int command;
 
@@ -187,7 +191,7 @@ DWORD WINAPI admin_console_thread(LPVOID arg) {
             }
 
             //ovde izvlacim socket od postojeceg suba- mozda je OVDE GRESKA MOZDA
-            SOCKET subSocket = contains(&subsCurrentHashNode->subscribers, subsriberID);
+            SOCKET subSocket = get(&subsCurrentHashNode->subscribers, subsriberID); //problem
 
             if (subSocket == INVALID_SOCKET)
             {
@@ -246,7 +250,7 @@ DWORD WINAPI admin_console_thread(LPVOID arg) {
                 continue;
             }
 
-            SOCKET subSocket = contains(&subsCurrentHashNode->subscribers, subsriberID);
+            SOCKET subSocket = get(&subsCurrentHashNode->subscribers, subsriberID);
 
             if (subSocket == INVALID_SOCKET)
             {

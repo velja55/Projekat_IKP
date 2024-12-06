@@ -69,14 +69,14 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
         printf("Error: Failed to create receiver thread.\n");
         return;
     }
-
+    printf("Choose an option:\n");
+    printf("1. Subscribe to a publisher\n");
+    printf("2. Unsubscribe from a publisher\n");
+    printf("3. Quit\n");
+    printf("Enter your choice: ");
     while (1) {
         // Let the user choose an action
-        printf("Choose an option:\n");
-        printf("1. Subscribe to a publisher\n");
-        printf("2. Unsubscribe from a publisher\n");
-        printf("3. Quit\n");
-        printf("Enter your choice: ");
+        
         scanf_s("%d", &choice);
 
         if (choice == 3) {

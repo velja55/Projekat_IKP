@@ -39,7 +39,7 @@ int contains(LinkedList* list, int key) {
     Node* current = list->head;
     while (current != NULL) {
         if (current->key == key) {
-            return 1;  // Ključ je pronađen
+            return 1; // Ključ je pronađen
         }
         current = current->next;
     }
