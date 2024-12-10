@@ -33,10 +33,6 @@ HANDLE workerThreads[THREAD_POOL_SIZE];  // Array to store thread handles
 DWORD WINAPI WorkerFunction(LPVOID lpParam) {
     while (1) {
         // Wait for the semaphore to be released (signal from the main thread)
-
-
-  
-
         int publisherID;
         char* message = (char*)malloc(256 * sizeof(char));
         if (dequeue(queueZaPoruke, &publisherID, message) == 0) {
@@ -508,6 +504,7 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
             int subscriberID = ntohs(clientAddr.sin_port);
             if (addSubscriber(glavniHashSet, publisherID, subscriberID, subscriberSocket, clientAddr) == true) {
                 sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                printHashSet(glavniHashSet);
                 printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
             }
             else {

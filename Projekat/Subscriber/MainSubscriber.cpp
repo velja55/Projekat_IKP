@@ -134,11 +134,130 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     CloseHandle(receiverThread);
 }
 
+DWORD WINAPI stressTestClientThread(LPVOID param) {
+    int publisherID = *(int*)param; // ID publisher-a koji nit obrađuje
+    struct sockaddr_in serverAddr;
+    char buffer[BUFFER_SIZE];
+    int received;
+
+    // Konfiguracija server adrese
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(SERVER_PORT);
+    inet_pton(AF_INET, SERVER_IP, &serverAddr.sin_addr);
+
+    // Kreiranje novog soketa za komunikaciju
+    SOCKET subscriberSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (subscriberSocket == INVALID_SOCKET) {
+        printf("Failed to create socket for Publisher %d.\n", publisherID);
+        return 1;
+    }
+
+    // Opcionalno bind-ovanje na specifičan port
+    struct sockaddr_in clientAddr;
+    memset(&clientAddr, 0, sizeof(clientAddr));
+    clientAddr.sin_family = AF_INET;
+    clientAddr.sin_addr.s_addr = INADDR_ANY;
+    clientAddr.sin_port = htons(0); // Automatski dodeljen port
+    if (bind(subscriberSocket, (struct sockaddr*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR) {
+        printf("Failed to bind socket for Publisher %d.\n", publisherID);
+        closesocket(subscriberSocket);
+        return 1;
+    }
+
+    // Pretplata na publishere-a
+    sprintf_s(buffer, "subscribe:%d", publisherID);
+    sendto(subscriberSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+    // Primanje odgovora
+    received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+    if (received > 0) {
+        buffer[received] = '\0';
+        printf("Subscription response for Publisher %d: %s\n", publisherID, buffer);
+    }
+    else {
+        printf("No response for subscription to Publisher %d.\n", publisherID);
+    }
+
+    // Zatvaranje soketa
+    closesocket(subscriberSocket);
+    return 0;
+}
+
+void startStressTest(SOCKET serverSocket) {
+    struct sockaddr_in serverAddr;
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(SERVER_PORT);
+    inet_pton(AF_INET, SERVER_IP, &serverAddr.sin_addr);
+
+    char buffer[BUFFER_SIZE];
+
+    // Dobavljanje liste publishere-a
+    sprintf_s(buffer, "get_publishers");
+
+    // Kreiranje novog socketa za inicijalni zahtev
+    SOCKET tempSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (tempSocket == INVALID_SOCKET) {
+        printf("Failed to create socket for initial request.\n");
+        return;
+    }
+
+    // Slanje zahteva za listu publishera
+    sendto(tempSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+
+    int received = recvfrom(tempSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+    closesocket(tempSocket); // Zatvaranje socketa nakon operacije
+
+    if (received <= 0) {
+        printf("Failed to retrieve publisher list.\n");
+        return;
+    }
+
+    buffer[received] = '\0'; // Null-terminate response
+    printf("Publisher list: %s\n", buffer);
+
+    // Parsiranje liste publishere-a
+    int publisherIDs[100];
+    int publisherCount = 0;
+
+    char* nextToken = NULL;
+    char* token = strtok_s(buffer, ",", &nextToken);
+    while (token != NULL && publisherCount < 100) {
+        publisherIDs[publisherCount++] = atoi(token);
+        token = strtok_s(NULL, ",", &nextToken);
+    }
+
+    if (publisherCount == 0) {
+        printf("No publishers available for subscription.\n");
+        return;
+    }
+
+    printf("Parsed %d publishers for subscription.\n", publisherCount);
+
+    // Kreiranje niti za svaki publisher
+    HANDLE threads[30]; // Maksimalan broj niti
+    for (int i = 0; i <30; i++) {
+        threads[i] = CreateThread(NULL, 0, stressTestClientThread, &publisherIDs[i%publisherCount], 0, NULL);
+        if (threads[i] == NULL) {
+            printf("Failed to create thread for Publisher %d.\n", publisherIDs[i]);
+        }
+    }
+
+    // Čekanje da sve niti završe
+    WaitForMultipleObjects(publisherCount, threads, TRUE, INFINITE);
+    for (int i = 0; i < publisherCount; i++) {
+        CloseHandle(threads[i]);
+    }
+
+    printf("Stress test completed.\n");
+}
+
 
 int main() {
     initializeWinSock();
 
-    // Create a socket
+    // Kreiranje soketa
     SOCKET clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (clientSocket == INVALID_SOCKET) {
         printf("Error: Failed to create socket.\n");
@@ -146,15 +265,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // Connect to the server
+    // Povezivanje na server
     struct sockaddr_in serverAddr;
-    memset(&serverAddr, 0, sizeof(serverAddr));  // Set all values in `serverAddr` to 0.
-    serverAddr.sin_family = AF_INET;            // Set address family to IPv4.
-    serverAddr.sin_port = htons(SERVER_PORT);  // Set server port (using htons to convert to network byte order).
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(SERVER_PORT);
 
-    // Convert IP address to binary form
-    if (inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr) <= 0) {
-        printf("Invalid IP address\n");
+    if (inet_pton(AF_INET, SERVER_IP, &serverAddr.sin_addr) <= 0) {
+        printf("Invalid IP address.\n");
         closesocket(clientSocket);
         WSACleanup();
         exit(EXIT_FAILURE);
@@ -162,10 +280,30 @@ int main() {
 
     printf("Connected to the server.\n");
 
-    // Communicate with the server
-    communicateWithServer(clientSocket, serverAddr);
+    // Opcije za rad
+    int choice;
+    printf("Choose mode:\n");
+    printf("1. Standard communication with server\n");
+    printf("2. Stress test\n");
+    printf("Enter your choice: ");
+    scanf_s("%d", &choice);
 
-    // Clean up
+    if (choice == 1) {
+        // Standardan rad
+        communicateWithServer(clientSocket, serverAddr);
+    }
+    else if (choice == 2) {
+        // Stres test
+        printf("Starting stress test...\n");
+        startStressTest(clientSocket); // Funkcija koja pokreće stres test
+        printf("Press enter to close");
+        scanf_s("%d", &choice);
+    }
+    else {
+        printf("Invalid choice. Exiting.\n");
+    }
+
+    // Čišćenje resursa
     closesocket(clientSocket);
     WSACleanup();
     printf("Disconnected from the server.\n");

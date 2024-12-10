@@ -130,47 +130,146 @@ DWORD WINAPI send_message(LPVOID param) {
     return 0;
 }
 
+DWORD WINAPI send_stress_message(LPVOID param) {
+    struct sockaddr_in server_addr, local_addr;
+    SOCKET new_sockfd;
+    char buffer[MAX_BUFFER_SIZE];
+    int bytes_sent, bytes_received;
+    int index = *((int*)param);  // Indeks poruke za svaki soket
+
+    // Kreiranje novog soketa
+    new_sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (new_sockfd == INVALID_SOCKET) {
+        printf("Socket creation failed for message %d\n", index);
+        return 1;
+    }
+
+    // Postavljanje lokalne adrese sa jedinstvenim portom
+    memset(&local_addr, 0, sizeof(local_addr));
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_addr.s_addr = INADDR_ANY;  // Automatski bira lokalnu IP adresu
+    local_addr.sin_port = htons(50000 + index);  // Jedinstveni lokalni port za svaki soket
+
+    if (bind(new_sockfd, (struct sockaddr*)&local_addr, sizeof(local_addr)) == SOCKET_ERROR) {
+        printf("Bind failed for local port %d\n", 50000 + index);
+        closesocket(new_sockfd);
+        return 1;
+    }
+
+    // Konfiguracija server adrese
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
+        printf("Invalid server IP address\n");
+        closesocket(new_sockfd);
+        return 1;
+    }
+
+    // Priprema poruke
+    snprintf(buffer, sizeof(buffer), "operacija=1|publisher=stress_test|maxsize=%d", index);
+
+    // Slanje poruke serveru
+    bytes_sent = sendto(new_sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    if (bytes_sent == SOCKET_ERROR) {
+        printf("Failed to send message %d\n", index);
+        closesocket(new_sockfd);
+        return 1;
+    }
+
+    // Prijem odgovora od servera (opcionalno)
+    bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+    if (bytes_received > 0) {
+        buffer[bytes_received] = '\0';
+        printf("Response from server for message %d: %s\n", index, buffer);
+    }
+
+    closesocket(new_sockfd);  // Zatvaranje soketa nakon slanja poruke
+    return 0;
+}
+
+DWORD WINAPI stressTest(LPVOID param) {
+    SOCKET sockfd = *(SOCKET*)param;  // Ne koristi se direktno ovde, ali se prosleđuje kao parametar
+    HANDLE threads[15];  // Niz za rukovanje nitima
+    int indices[15];     // Indeksi za niti
+    int i;
+
+    printf("Stress test started...\n");
+
+    // Kreiranje 15 niti za slanje poruka
+    for (i = 0; i < 15; i++) {
+        indices[i] = i;  // Postavljanje indeksa za svaku nit
+        threads[i] = CreateThread(NULL, 0, send_stress_message, &indices[i], 0, NULL);
+        if (threads[i] == NULL) {
+            printf("Failed to create thread for message %d\n", i);
+            continue;
+        }
+    }
+
+    // Čekanje da sve niti završe
+    for (i = 0; i < 15; i++) {
+        if (threads[i] != NULL) {
+            WaitForSingleObject(threads[i], INFINITE);
+            CloseHandle(threads[i]);
+        }
+    }
+
+    printf("Stress test completed.\n");
+    return 0;
+}
+
+
+
 int main() {
-    WSADATA wsaData;                    // Struktura koja sadrži informacije o Winsock verziji i drugim podešavanjima.
+    WSADATA wsaData;
 
-    // Pokreće Winsock biblioteku sa verzijom 2.2. Ako inicijalizacija ne uspe, izlazi sa greškom.
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        printf("WSAStartup failed\n");            // Ako je inicijalizacija neuspešna, ispisuje grešku.
-        exit(EXIT_FAILURE);                       // Izađe iz programa sa kodom greške.
+        printf("WSAStartup failed\n");
+        exit(EXIT_FAILURE);
     }
 
-    SOCKET sockfd;                         // Definiše soket za komunikaciju (UDP socket).
-    // Kreira UDP soket za komunikaciju sa serverom koristeći IPv4.
-    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (sockfd == INVALID_SOCKET) {             // Ako soket nije uspešno kreiran, ispisuje grešku.
+    SOCKET sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sockfd == INVALID_SOCKET) {
         printf("Socket creation failed\n");
-        WSACleanup();                           // Čisti resurse Winsock-a.
-        exit(EXIT_FAILURE);                     // Izađe iz programa sa greškom.
+        WSACleanup();
+        exit(EXIT_FAILURE);
     }
 
-    // Kreiraj nit koja će slati poruke serveru
-    HANDLE sendThread = CreateThread(
-        NULL,                // Bez posebnih atributa
-        0,                   // Veličina stoga niti (0 znači sistemska vrednost)
-        send_message,        // Funkcija koja će biti pozvana unutar nove niti
-        &sockfd,             // Parametar za nit (soket)
-        0,                   // Flags (0 znači normalno pokretanje)
-        NULL                 // Povratni identifikator niti
-    );
+    int choice;
+    HANDLE threadHandle;
 
-    if (sendThread == NULL) {
-        printf("Failed to create send thread\n");
+    printf("Choose an option:\n");
+    printf("1. Normal message sending\n");
+    printf("2. Stress test\n");
+    printf("Enter your choice: ");
+    scanf_s("%d", &choice);
+    getchar();  // Uklanja '\n' iz input buffer-a
+
+    if (choice == 1) {
+        threadHandle = CreateThread(NULL, 0, send_message, &sockfd, 0, NULL);
+    }
+    else if (choice == 2) {
+        threadHandle = CreateThread(NULL, 0, stressTest, &sockfd, 0, NULL);
+    }
+    else {
+        printf("Invalid choice. Exiting.\n");
         closesocket(sockfd);
         WSACleanup();
         return 1;
     }
 
-    // Čekanje da se nit završi (nije obavezno, možeš dodati čekanje u zavisnosti od implementacije)
-    WaitForSingleObject(sendThread, INFINITE);
+    if (threadHandle == NULL) {
+        printf("Failed to create thread\n");
+        closesocket(sockfd);
+        WSACleanup();
+        return 1;
+    }
 
-    // Zatvara soket.
+    WaitForSingleObject(threadHandle, INFINITE);
+    CloseHandle(threadHandle);
+    int neki;
+    scanf_s("%d", &neki);
     closesocket(sockfd);
-    WSACleanup();                                        // Čisti resurse Winsock-a.
-
+    WSACleanup();
     return 0;
 }
