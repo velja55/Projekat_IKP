@@ -2,10 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Queue.h"
-#define INITIAL_CAPACITY 10         // Initial queue capacity
+#define INITIAL_CAPACITY 2         // Initial queue capacity
 #define MAX_MESSAGE_SIZE 256       // Maximum message size
-
-
 
 // Function to initialize the queue
 void initQueue(Queue* queue) {
@@ -51,105 +49,145 @@ void initQueue(Queue* queue) {
     InitializeCriticalSection(&queue->criticalSection);
 }
 
-
-// Function to expand the queue's capacity when it's full
+// Debugging print inside expandQueue
 void expandQueue(Queue* queue) {
-    // Lock access to the queue using the critical section
-    EnterCriticalSection(&queue->criticalSection);
+    EnterCriticalSection(&queue->criticalSection);  // Lock the critical section
 
-    // Double the capacity of the queue
+    printf("Expanding queue: Current size = %d, Current capacity = %d\n", queue->size, queue->capacity);
+
+    // Double the capacity
     int newCapacity = queue->capacity * 2;
 
-    // Allocate new memory for the expanded queue
+    // Allocate new memory for the idPublishers and messages arrays
     int* newIdPublishers = (int*)malloc(newCapacity * sizeof(int));
     char** newMessages = (char**)malloc(newCapacity * sizeof(char*));
+
+    if (newIdPublishers == NULL || newMessages == NULL) {
+        printf("Memory allocation failed while expanding the queue\n");
+        LeaveCriticalSection(&queue->criticalSection);  // Release the lock
+        return;
+    }
 
     // Copy old data to new arrays
     for (int i = 0; i < queue->size; i++) {
         int index = (queue->front + i) % queue->capacity;
         newIdPublishers[i] = queue->idPublishers[index];
-        newMessages[i] = queue->messages[index];
+
+        // Handle the case where the message might be NULL
+        if (queue->messages[index] != NULL) {
+            newMessages[i] = _strdup(queue->messages[index]);
+            if (newMessages[i] == NULL) {
+                printf("Memory allocation failed for new message during queue expansion\n");
+
+                // Free already allocated memory before returning
+                for (int j = 0; j < i; j++) {
+                    free(newMessages[j]);
+                }
+                free(newMessages);
+                free(newIdPublishers);
+                LeaveCriticalSection(&queue->criticalSection);  // Release lock
+                return;
+            }
+        }
+        else {
+            newMessages[i] = NULL;  // If the message is NULL, set the new entry to NULL as well
+        }
     }
 
     // Free old arrays
     free(queue->idPublishers);
     free(queue->messages);
 
-    // Update queue pointers and capacity
+    // Assign new arrays to the queue
     queue->idPublishers = newIdPublishers;
     queue->messages = newMessages;
+
+    // Update the front and rear positions
     queue->front = 0;
     queue->rear = queue->size - 1;
     queue->capacity = newCapacity;
 
-    // Update the emptySemaphore to reflect new empty slots
-    // The difference between the new capacity and the current size is the number of new empty slots
-    ReleaseSemaphore(queue->emptySemaphore, newCapacity - queue->size, NULL);                           // npr imamo 4 zauzeta mesta emptySemaphore =0   slobodnih mesta
-                                                                                                        //kada prosirujemo imacemo 8 -4 -> emptySemaphore =4 
-    // Unlock the critical section
-    LeaveCriticalSection(&queue->criticalSection);
+    printf("Queue expanded: New capacity = %d\n", queue->capacity);
+
+    // Release empty slots in the semaphore to reflect the new capacity
+    ReleaseSemaphore(queue->emptySemaphore, newCapacity - queue->size, NULL);
+
+    LeaveCriticalSection(&queue->criticalSection);  // Release critical section
 }
 
 
-// Function to add an element to the queue (enqueue)
 void enqueue(Queue* queue, int idPublisher, const char* message) {
-    // Wait for an empty slot in the queue
-    WaitForSingleObject(queue->emptySemaphore, INFINITE);            //ovde se dekrementuje emptySemaphore  
+    printf("Enqueueing: Queue size = %d, Queue capacity = %d, Rear = %d\n", queue->size, queue->capacity, queue->rear);
 
-    // Lock access to the queue using the critical section
+    // Wait for an empty slot to become available
+    WaitForSingleObject(queue->emptySemaphore, INFINITE);
     EnterCriticalSection(&queue->criticalSection);
 
-    // Check if the queue is full (i.e., size == capacity)
+    // If the queue is full, expand it
     if (queue->size == queue->capacity) {
-        // If full, expand the queue by calling expandQueue
         expandQueue(queue);
     }
+
+    // Save the old rear index before incrementing it
+    int oldRear = queue->rear;
+
+    // Update the rear index
     queue->rear = (queue->rear + 1) % queue->capacity;
-    // Add the new publisher ID and message to the queue
+
+    // Free the message at the old rear position before overwriting it
+    if (queue->size > 0 && queue->messages[oldRear] != NULL) {
+        free(queue->messages[oldRear]);
+    }
+
+    // Allocate memory for the new message and copy it
+    queue->messages[queue->rear] = _strdup(message);  // Copy the message
+
+    // Store the publisher ID
     queue->idPublishers[queue->rear] = idPublisher;
 
-    // Copy message and ensure it's not NULL
-    if (queue->messages[queue->rear] != NULL) {
-        free(queue->messages[queue->rear]);  // Free the old message if needed
-    }
-    queue->messages[queue->rear] = _strdup(message);
-
+    // Increase the size of the queue after adding the message
     queue->size++;
 
-    // Release the fullSemaphore to signal that there is a new message in the queue
+    // Signal that there is a new item in the queue
     ReleaseSemaphore(queue->fullSemaphore, 1, NULL);
 
-    // Unlock the critical section
     LeaveCriticalSection(&queue->criticalSection);
+
+    printf("Message enqueued: Rear = %d, Size = %d\n", queue->rear, queue->size);
 }
 
-// Function to remove an element from the queue (dequeue)
-int dequeue(Queue* queue, int* idPublisher, char* message) {
-    // Wait for a full slot (message available)
-    WaitForSingleObject(queue->fullSemaphore, INFINITE);                //thredovi uzimaju iz queue i ovde se dekrementuje fullSemaphore
 
-    // Lock access to the queue using the critical section
+
+
+
+int dequeue(Queue* queue, int* idPublisher, char* message) {
+    printf("Dequeuing: Front = %d, Size = %d\n", queue->front, queue->size);
+
+    WaitForSingleObject(queue->fullSemaphore, INFINITE);
     EnterCriticalSection(&queue->criticalSection);
 
-    // Remove the publisher ID and message from the front of the queue
-    *idPublisher = queue->idPublishers[queue->front];
-    strcpy_s(message,256, queue->messages[queue->front]);
+    if (queue->size == 0) {
+        printf("Queue is empty. No messages to dequeue.\n");
+        LeaveCriticalSection(&queue->criticalSection);
+        return -1;  // Indicate an error if the queue is empty
+    }
 
-    // Free the message string
+    *idPublisher = queue->idPublishers[queue->front];
+    strcpy_s(message, MAX_MESSAGE_SIZE, queue->messages[queue->front]);
+
     free(queue->messages[queue->front]);
 
-    // Update the front pointer and size
     queue->front = (queue->front + 1) % queue->capacity;
-    queue->size--;
+    queue->size--;  // Decrease the size after removing a message
 
-    // Release the emptySemaphore to signal that a slot is now available
     ReleaseSemaphore(queue->emptySemaphore, 1, NULL);
-
-    // Unlock the critical section
     LeaveCriticalSection(&queue->criticalSection);
 
-    return 0;  // Indicating success
+    printf("Message dequeued: Front = %d, Size = %d\n", queue->front, queue->size);
+
+    return 0;
 }
+
 
 // Function to check if the queue is empty
 int isQueueEmpty(Queue* queue) {
@@ -181,7 +219,7 @@ void freeQueue(Queue* queue) {
 }
 
 // Function to print the elements of the queue
-void printQueue( Queue* queue) {
+void printQueue(Queue* queue) {
     // Lock access to the queue using the critical section
     EnterCriticalSection(&queue->criticalSection);
 
@@ -194,6 +232,3 @@ void printQueue( Queue* queue) {
     // Unlock the critical section
     LeaveCriticalSection(&queue->criticalSection);
 }
-
-
-

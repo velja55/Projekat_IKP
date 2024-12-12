@@ -149,7 +149,7 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     // Kreiranje novog soketa za komunikaciju
     SOCKET subscriberSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (subscriberSocket == INVALID_SOCKET) {
-        printf("Failed to create socket for Publisher %d.\n", publisherID);
+        printf("Failed to create socket for Publisher %d.\n", publisherID);     //msm da je ovo socket za subscribera
         return 1;
     }
 
@@ -169,7 +169,7 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     sprintf_s(buffer, "subscribe:%d", publisherID);
     sendto(subscriberSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-    // Primanje odgovora
+    // Primanje odgovora za subscribovanje
     received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
     if (received > 0) {
         buffer[received] = '\0';
@@ -177,6 +177,35 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     }
     else {
         printf("No response for subscription to Publisher %d.\n", publisherID);
+    }
+
+
+    //primanje poruka od publishera preko admina
+    // Getting the local port assigned by the OS
+    struct sockaddr_in localAddr;
+    int addrLen = sizeof(localAddr);
+    int subscriberID;
+    if (getsockname(subscriberSocket, (struct sockaddr*)&localAddr, &addrLen) == SOCKET_ERROR) {
+        printf("Failed to get local address information for Publisher \n");
+    }
+    else {
+        printf("Subscriber socket bound to port: %d\n", ntohs(localAddr.sin_port));
+    }
+
+    subscriberID = ntohs(localAddr.sin_port);
+
+
+    while (keepReceiving==1)
+    {
+        received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+        if (received > 0) {
+            buffer[received] = '\0';
+            printf("SubscriberID: %d Message from Publisher %d: %s\n", subscriberID,publisherID, buffer);
+        }
+        else {
+            printf("No from Publisher %d.\n", publisherID);
+        }
+
     }
 
     // Zatvaranje soketa
@@ -218,7 +247,7 @@ void startStressTest(SOCKET serverSocket) {
     printf("Publisher list: %s\n", buffer);
 
     // Parsiranje liste publishere-a
-    int publisherIDs[100];
+    int publisherIDs[100];                                                                  //pazi da kada budemo povecali broj publishera da nam ovo ne bude Greska sto je fiksno
     int publisherCount = 0;
 
     char* nextToken = NULL;

@@ -35,21 +35,23 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
         // Wait for the semaphore to be released (signal from the main thread)
         int publisherID;
         char* message = (char*)malloc(256 * sizeof(char));
+
+        // Check if there is a message in the queue
         if (dequeue(queueZaPoruke, &publisherID, message) == 0) {
-            // Find subscribers for the publisher in the HashSet
+            // Process the message if it exists
             LinkedList* subscribers = getSubscribers(glavniHashSet, publisherID);
-            if (subscribers != NULL) {
+            if (subscribers != NULL && subscribers->size != 0) {
                 // Iterate through the LinkedList of subscribers
                 Node* current = subscribers->head;
                 while (current != NULL) {
                     SOCKET subscriberSocket = current->socket;  // Get the socket of the subscriber
 
-                    printf("porukica: %s \n", message);
+                    printf("Message: %s\n", message);
                     // Send the message to the subscriber
                     int bytesSent = sendto(
                         subscriberSocket,                       // UDP socket
                         message,                                // Message to send
-                        strlen(message),                        // Length of the messagesadh
+                        strlen(message),                        // Length of the message
                         0,                                      // Flags
                         (struct sockaddr*)&(current->addr),     // Address of the subscriber
                         sizeof(current->addr)                   // Address length
@@ -58,7 +60,7 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
                         int error_code = WSAGetLastError();
                         printf("Failed to send message. Error code: %d\n", error_code);
 
-                        // Opcionalno: Možete koristiti i switch-case za najčešće greške
+                        // Handle specific error codes
                         switch (error_code) {
                         case WSAENOTCONN:
                             printf("Socket is not connected.\n");
@@ -87,9 +89,13 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
             else {
                 printf("No subscribers found for publisher ID %d\n", publisherID);
             }
-        }
 
-        free(message);  // Free memory allocated for the message
+            free(message);  // Free memory allocated for the message
+        }
+        else {
+            // No message to dequeue, wait for a short period to avoid busy waiting
+            Sleep(100);  // Sleep for 100 milliseconds
+        }
     }
     return 0;
 }
@@ -325,8 +331,8 @@ void parse_message(char* buffer, int* operacija, int* id, size_t* maxSize, char*
     // Drugi token je ID (koristi port klijenta)
     token = strtok_s(NULL, "|", &context);
     if (token != NULL) {
-        sscanf_s(token, "id=%15s", id_str, (unsigned)_countof(id_str));
-        *id = ntohs(client_addr->sin_port);
+        sscanf_s(token, "id=%15s", id_str, (unsigned)_countof(id_str));                 //ovo nista ne radi jer jedino preko socketa uzimamo port od klienta
+        *id = ntohs(client_addr->sin_port);                                             //ovaj deo uzima port
     }
 
     // Treći token je maxsize ili message
@@ -394,17 +400,17 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
 
         if (flag == 1) {
             addPublisher(glavniHashSet, publisherID, maxSize);              //critical section je u funckiji
-            printHashSet(glavniHashSet);
+            //printHashSet(glavniHashSet);                                  //da se lepse ispisuje
         }
         else {
-            enqueue(queueZaPoruke, publisherID, poruka);
+            enqueue(queueZaPoruke, publisherID, poruka);                    //DODAVANJE PORUKA U QUEUE
             printQueue(queueZaPoruke);
         }
         // Send acknowledgment back to the client
         sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
 
         // Print the current state of the HashSet
-        printHashSet(glavniHashSet);
+       // printHashSet(glavniHashSet);
 
         // Free dynamically allocated memory for the message (to avoid memory leaks)
         free(poruka);

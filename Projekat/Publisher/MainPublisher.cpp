@@ -15,6 +15,20 @@ typedef struct {
     char publisherName[MAX_BUFFER_SIZE];
 } ThreadParams;
 
+//random reci koje publisher salje subscriberima
+const char* RandomWords[10] = {
+    "jabuka",
+    "kuca",
+    "covek",
+    "prozor",
+    "reka",
+    "sunce",
+    "knjiga",
+    "automobil",
+    "stolica",
+    "grad"
+};
+
 // Funkcija za kontinuirano slanje novih poruka serveru
 DWORD WINAPI send_continuous_messages(LPVOID param) {
     ThreadParams* params = (ThreadParams*)param;
@@ -184,6 +198,38 @@ DWORD WINAPI send_stress_message(LPVOID param) {
         printf("Response from server for message %d: %s\n", index, buffer);
     }
 
+
+    int random = 0;     //kao random brojac
+
+    int potvrda = 0;
+
+
+
+    while (true)
+    {
+        Sleep(8000);
+
+        random++;
+
+        int pomocni = random % 10;          //%10 je velicina niza random reci
+
+        snprintf(buffer, sizeof(buffer), "operacija=2|publisher=stress_test|message=%s", RandomWords[pomocni]);
+
+        bytes_sent = sendto(new_sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+        if (bytes_sent == SOCKET_ERROR) {
+            printf("Failed to send message from publisher %d\n", 50000 + index);
+            closesocket(new_sockfd);
+            return 1;
+        }
+        // Prijem odgovora od servera (opcionalno)
+        bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0';
+            printf("Response from server for message %d: %s\n", 5000+index, buffer);
+        }
+
+
+    }
     closesocket(new_sockfd);  // Zatvaranje soketa nakon slanja poruke
     return 0;
 }

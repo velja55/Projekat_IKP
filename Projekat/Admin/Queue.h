@@ -8,8 +8,6 @@
 // Maksimalna veličina poruke
 #define MAX_MESSAGE_SIZE 256
 
-// Početni kapacitet reda KAD SE ISTESTIRA POVECA|Ti
-#define INITIAL_CAPACITY 4
 
 // Struktura za čvor reda
 typedef struct {
