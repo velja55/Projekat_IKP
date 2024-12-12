@@ -36,6 +36,9 @@
     <ClCompile Include="MainAdmin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="globalVariable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LinkedList.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="globalVariable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

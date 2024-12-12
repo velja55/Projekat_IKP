@@ -3,6 +3,7 @@
 #include <string.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>  // For inet_pton
+#include "../Admin/globalVariable.cpp"
 
 #define MAX_BUFFER_SIZE 1024         // Definiše maksimalnu veličinu bafera (1024 bajta) za prijem i slanje podataka.
 #define SERVER_PORT 12345            // Definiše port na kojem server komunicira sa klijentima (UDP port 12345).
@@ -158,6 +159,14 @@ DWORD WINAPI send_stress_message(LPVOID param) {
         return 1;
     }
 
+    // Set socket to non-blocking mode
+    u_long mode = 1;  // 1 for non-blocking, 0 for blocking
+    if (ioctlsocket(new_sockfd, FIONBIO, &mode) != 0) {
+        printf("Failed to set socket to non-blocking mode for message %d\n", index);
+        closesocket(new_sockfd);
+        return 1;
+    }
+
     // Postavljanje lokalne adrese sa jedinstvenim portom
     memset(&local_addr, 0, sizeof(local_addr));
     local_addr.sin_family = AF_INET;
@@ -186,32 +195,56 @@ DWORD WINAPI send_stress_message(LPVOID param) {
     // Slanje poruke serveru
     bytes_sent = sendto(new_sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
     if (bytes_sent == SOCKET_ERROR) {
-        printf("Failed to send message %d\n", index);
+        printf("Failed to send message %d\n", 50000 + index);
         closesocket(new_sockfd);
         return 1;
     }
 
+    // Setup for select() with a timeout to check every second
+    fd_set readfds;
+    struct timeval timeout;
+    int ret;
+
+    timeout.tv_sec = 1;  // Timeout set to 1 second
+    timeout.tv_usec = 0; // No microseconds
+
     // Prijem odgovora od servera (opcionalno)
-    bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-    if (bytes_received > 0) {
+    FD_ZERO(&readfds);  // Clear the readfds set
+    FD_SET(new_sockfd, &readfds);  // Add the socket to the set
+
+    ret = select(0, &readfds, NULL, NULL, &timeout);
+    if (ret == SOCKET_ERROR) {
+        printf("Select failed for message %d\n", index);
+        closesocket(new_sockfd);
+        return 1;
+    }
+    if (ret > 0 && FD_ISSET(new_sockfd, &readfds)) {
+        // Socket is ready to read
+        bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+        if (bytes_received == SOCKET_ERROR) {
+            printf("Failed to receive initial response for message %d\n", 50000 + index);
+            closesocket(new_sockfd);
+            return 1;
+        }
         buffer[bytes_received] = '\0';
-        printf("Response from server for message %d: %s\n", index, buffer);
+        printf("Response from server for message %d: %s\n", 50000 + index, buffer);
     }
 
-
     int random = 0;     //kao random brojac
+    int pomocni = 0;
 
-    int potvrda = 0;
+    // Check periodically every second for shutdown
+    while (!shutdown_variable) {
+        //printf("Waiting for shutdown signal, current value of shutdown_variable: %d\n", shutdown_variable);
+        Sleep(8000);  // Sleep for 1 second to check more frequently
 
-
-
-    while (true)
-    {
-        Sleep(8000);
+        // Check if shutdown has occurred
+        if (shutdown_variable) {
+            break;
+        }
 
         random++;
-
-        int pomocni = random % 10;          //%10 je velicina niza random reci
+        pomocni = random % 10;  // %10 is the size of the random word array
 
         snprintf(buffer, sizeof(buffer), "operacija=2|publisher=stress_test|message=%s", RandomWords[pomocni]);
 
@@ -221,29 +254,49 @@ DWORD WINAPI send_stress_message(LPVOID param) {
             closesocket(new_sockfd);
             return 1;
         }
-        // Prijem odgovora od servera (opcionalno)
-        bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-        if (bytes_received > 0) {
-            buffer[bytes_received] = '\0';
-            printf("Response from server for message %d: %s\n", 5000+index, buffer);
+
+        // Setup for select() with a timeout to check every second
+        FD_ZERO(&readfds);  // Clear the readfds set
+        FD_SET(new_sockfd, &readfds);  // Add the socket to the set
+
+        ret = select(0, &readfds, NULL, NULL, &timeout);
+        if (ret == SOCKET_ERROR) {
+            printf("Select failed for message %d\n", index);
+            closesocket(new_sockfd);
+            return 1;
         }
-
-
+        if (ret > 0 && FD_ISSET(new_sockfd, &readfds)) {
+            // Socket is ready to read
+            bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (bytes_received == SOCKET_ERROR) {
+                printf("Failed to receive message for publisher %d\n", 50000 + index);
+                closesocket(new_sockfd);
+                return 1;
+            }
+            buffer[bytes_received] = '\0';
+            printf("Response from server for message %d: %s\n", 50000 + index, buffer);
+        }
     }
-    closesocket(new_sockfd);  // Zatvaranje soketa nakon slanja poruke
+
+    printf("Shutting down Stress Test\n");
+
+    closesocket(new_sockfd);  // Close the socket after sending the message
     return 0;
 }
 
+
+
 DWORD WINAPI stressTest(LPVOID param) {
     SOCKET sockfd = *(SOCKET*)param;  // Ne koristi se direktno ovde, ali se prosleđuje kao parametar
-    HANDLE threads[15];  // Niz za rukovanje nitima
-    int indices[15];     // Indeksi za niti
+    //broj publishera
+    HANDLE threads[2];  // Niz za rukovanje nitima
+    int indices[2];     // Indeksi za niti
     int i;
 
     printf("Stress test started...\n");
 
     // Kreiranje 15 niti za slanje poruka
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < 2; i++) {
         indices[i] = i;  // Postavljanje indeksa za svaku nit
         threads[i] = CreateThread(NULL, 0, send_stress_message, &indices[i], 0, NULL);
         if (threads[i] == NULL) {
@@ -253,7 +306,7 @@ DWORD WINAPI stressTest(LPVOID param) {
     }
 
     // Čekanje da sve niti završe
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < 2; i++) {
         if (threads[i] != NULL) {
             WaitForSingleObject(threads[i], INFINITE);
             CloseHandle(threads[i]);
@@ -314,6 +367,7 @@ int main() {
     WaitForSingleObject(threadHandle, INFINITE);
     CloseHandle(threadHandle);
     int neki;
+    printf("Gasenje Publisher Programa \n");
     scanf_s("%d", &neki);
     closesocket(sockfd);
     WSACleanup();

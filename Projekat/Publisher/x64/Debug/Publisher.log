@@ -1,6 +1,6 @@
 ﻿  MainPublisher.cpp
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(55,38): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(112,34): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(187,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(218,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(56,38): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(113,34): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(196,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(251,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   Publisher.vcxproj -> C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\x64\Debug\Publisher.exe

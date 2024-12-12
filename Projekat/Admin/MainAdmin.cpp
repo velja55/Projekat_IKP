@@ -8,6 +8,8 @@
 #include "HashSetForSubscribers.h"
 #include "Queue.h" 
 
+#include "globalVariable.h"             //za gracefullShutDown
+
 #define MAX_BUFFER_SIZE 1024
 #define PUBLISHER_PORT 12345
 
@@ -29,10 +31,15 @@ typedef struct {
 
 HANDLE workerThreads[THREAD_POOL_SIZE];  // Array to store thread handles
 
-// Worker thread function for processing messages from the queue
 DWORD WINAPI WorkerFunction(LPVOID lpParam) {
-    while (1) {
-        // Wait for the semaphore to be released (signal from the main thread)
+    // Set up for periodic shutdown check
+    while (TRUE) {
+        // If shutdown has happened, exit gracefully
+        if (shutdown_variable == true) {
+            break;
+        }
+
+        // Try to dequeue a message from the queue
         int publisherID;
         char* message = (char*)malloc(256 * sizeof(char));
 
@@ -90,15 +97,20 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
                 printf("No subscribers found for publisher ID %d\n", publisherID);
             }
 
-            free(message);  // Free memory allocated for the message
+            // Free memory allocated for the message
+            free(message);
         }
         else {
             // No message to dequeue, wait for a short period to avoid busy waiting
             Sleep(100);  // Sleep for 100 milliseconds
         }
     }
+
+    printf("Worker thread exiting...\n");
     return 0;
 }
+
+
 
 
 
@@ -114,7 +126,7 @@ DWORD WINAPI admin_console_thread(LPVOID arg) {
     printf("  4 - Remove Subscriber from Publisher\n");
     printf("  5 - Shut down the server\n");
 
-    while (1) {
+    while (shutdown_variable==false) {
         printf(">> ");
 
         // Read command and handle non-integer inputs
@@ -279,11 +291,11 @@ DWORD WINAPI admin_console_thread(LPVOID arg) {
         }
         else if (command == 5) {                               //Ovo treba da uradimo tako da se svi threadovi notifikuje tipa sa globalnim bool-om, i onda kod workera npr while(shutdown!=true) da radi thread
             printf("Initiating graceful shutdown...\n");
-            // Signal other threads to stop and clean up resources
-            //initiate_shutdown(); // Define this function to handle cleanup
-            
-            
-            //break; // Exit the loop to stop the thread
+
+            // Signal the worker threads to stop
+            shutdown_variable = true;
+            return 0;
+
         }
         else {
             printf("Unknown command. Please type 1, 2, or 3 for available commands.\n");
@@ -291,29 +303,13 @@ DWORD WINAPI admin_console_thread(LPVOID arg) {
         }
     }
 
-    //return 0;
+    return 0;
 }
 
 
 
 
-//DWORD WINAPI WorkerFunction(LPVOID lpParam) {
-//    while (1) {
-//        // Wait for the semaphore to be released (signal from the main thread)
-//        WaitForSingleObject(hSemaphore, INFINITE);
-//
-//        // Process the message from the queue (ensure thread-safe access)
-//        int publisherID;
-//        char* message = (char*)malloc(256 * sizeof(char));
-//        if (dequeue(queueZaPoruke, &publisherID, message) == 0) {
-//            // Assuming sendToSubscribers sends the message to all subscribers
-//           // sendToSubscribers(publisherID, message);  // Implement this function to send to subscribers
-//            printf("Worker: Processing message from Publisher %d: %s\n", publisherID, message);
-//        }
-//        free(message);  // Free memory allocated for the message
-//    }
-//    return 0;
-//}
+
 
 // Funkcija za parsiranje poruke
 // Function to parse the message and extract ID, naziv, and maxsize
@@ -378,66 +374,75 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
     char buffer[MAX_BUFFER_SIZE];
     int bytes_received;
 
-    printf("Thread for processing client messages is running...\n");
+    // Setup for select() with a timeout to check every second
+    fd_set readfds;
+    struct timeval timeout;
+    int ret;
+    //sluzi da bi nam na svakih 1 sekundu proverali da li je shutdownVariable promenio, jer bez ovoga nas thread bi zakucao na blokirajucem recvfrom-u
+    timeout.tv_sec = 1;  // Timeout set to 1 second
+    timeout.tv_usec = 0; // No microseconds
 
-    while (1) {
-        // Receive message
-        bytes_received = recvfrom(sockfd, buffer, MAX_BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &addr_len);
-        if (bytes_received == SOCKET_ERROR) {
-            printf("recvfrom failed\n");
-            continue;
+    printf("Thread for processing publisher messages is running...\n");
+
+    while (shutdown_variable == false) {
+        FD_ZERO(&readfds);
+        FD_SET(sockfd, &readfds);  // Monitor the publisher socket
+
+        // Use select() to allow periodic checks for the shutdown variable
+        ret = select(0, &readfds, NULL, NULL, &timeout);
+
+        // If select times out, just continue and check for shutdown condition
+        if (ret == 0) {
+            continue;  // Timeout occurred, nothing to read, just loop and check shutdown
         }
 
-        // Null-terminate the string
-        buffer[bytes_received] = '\0';
-
-        // Parse the message
-        int flag;
-        int publisherID;
-        size_t maxSize;
-        char* poruka = (char*)malloc(256 * sizeof(char));
-        parse_message(buffer,&flag, &publisherID, &maxSize,poruka, &client_addr);
-
-        if (flag == 1) {
-            addPublisher(glavniHashSet, publisherID, maxSize);              //critical section je u funckiji
-            //printHashSet(glavniHashSet);                                  //da se lepse ispisuje
+        // If the shutdown signal is set, exit gracefully
+        if (shutdown_variable == true) {
+            break;
         }
-        else {
-            enqueue(queueZaPoruke, publisherID, poruka);                    //DODAVANJE PORUKA U QUEUE
-            printQueue(queueZaPoruke);
+
+        // If data is available on the socket, read it
+        if (FD_ISSET(sockfd, &readfds)) {
+            bytes_received = recvfrom(sockfd, buffer, MAX_BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &addr_len);
+            if (bytes_received == SOCKET_ERROR) {
+                printf("recvfrom failed\n");
+                continue;  // Continue if there's an error in receiving data
+            }
+
+            buffer[bytes_received] = '\0';  // Null-terminate the received data
+
+            // Parse the message
+            int flag;
+            int publisherID;
+            size_t maxSize;
+            char* poruka = (char*)malloc(256 * sizeof(char));
+            parse_message(buffer, &flag, &publisherID, &maxSize, poruka, &client_addr);
+
+            // Handle publisher registration or message enqueuing based on the flag
+            if (flag == 1) {
+                addPublisher(glavniHashSet, publisherID, maxSize); // Critical section is inside this function
+                // Optionally, print the updated HashSet for debugging purposes
+                // printHashSet(glavniHashSet);
+            }
+            else {
+                enqueue(queueZaPoruke, publisherID, poruka);  // Add messages to the queue
+                printQueue(queueZaPoruke);
+            }
+
+            // Send acknowledgment back to the client
+            sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
+
+            // Free dynamically allocated memory for the message (to avoid memory leaks)
+            free(poruka);
         }
-        // Send acknowledgment back to the client
-        sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
-
-        // Print the current state of the HashSet
-       // printHashSet(glavniHashSet);
-
-        // Free dynamically allocated memory for the message (to avoid memory leaks)
-        free(poruka);
     }
 
+    printf("Publisher thread exiting...\n");
     return 0;
 }
 
-/*
-//do ovde sve dobro uradi
-void sendPublisherIDsToSubscriber(SOCKET subscriberSocket, int* publisherIDs, size_t count, struct sockaddr_in* clientAddr) {
-    if (!publisherIDs || count == 0) {
-        const char* errorMsg = "No publishers available";
-        sendto(subscriberSocket, errorMsg, strlen(errorMsg), 0, (struct sockaddr*)clientAddr, sizeof(*clientAddr));
-        return;
-    }
 
-    // Send the IDs as a single data packet
-    int bytesSent = sendto(subscriberSocket, (char*)publisherIDs, count * sizeof(int), 0, (struct sockaddr*)clientAddr, sizeof(*clientAddr));  //ne posalje dobre vrednosti
-    if (bytesSent == SOCKET_ERROR) {
-        printf("Failed to send publisher IDs to subscriber\n");
-    }
-    else {
-        printf("Sent %zu publisher IDs to subscriber\n", count);
-    }
-}
-*/
+
 
 void sendPublisherIDsToSubscriber(SOCKET subscriberSocket, int* publisherIDs, size_t count, struct sockaddr_in* clientAddr) {
     if (!publisherIDs || count == 0) {
@@ -480,67 +485,91 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
     char buffer[MAX_BUFFER_SIZE];
     int bytesReceived;
 
-    while (1) {
-        //if socket closed/ subscriber deleted -> 
+    // Setup for select() with a timeout to check every second
+    fd_set readfds;
+    struct timeval timeout;
+    int ret;
 
-        bytesReceived = recvfrom(subscriberSocket, buffer, MAX_BUFFER_SIZE, 0, (struct sockaddr*)&clientAddr, &addrLen);
-        if (bytesReceived == SOCKET_ERROR) {
-            if (WSAGetLastError() == WSAENOTSOCK)
-                break;
+    timeout.tv_sec = 1;  // Timeout set to 1 second
+    timeout.tv_usec = 0; // No microseconds
 
-            printf("Error: Failed to receive data from server. WSA Error Code: %d\n", WSAGetLastError());
-            continue;
+    while (shutdown_variable == false) {
+        FD_ZERO(&readfds);
+        FD_SET(subscriberSocket, &readfds);  // Monitor the subscriber socket
+
+        // Use select() to check for data availability and shutdown signal
+        ret = select(0, &readfds, NULL, NULL, &timeout);
+
+        // If select times out, just check the shutdown condition and continue
+        if (ret == 0) {
+            continue;  // Timeout occurred, nothing to read, just loop and check shutdown
         }
-        buffer[bytesReceived] = '\0';  // Null-terminate received data
 
-        printf("Message received from Subscriber: %s\n", buffer);
+        // If the shutdown signal is set, exit gracefully
+        if (shutdown_variable == true) {
+            break;
+        }
 
-        if (strncmp(buffer, "get_publishers", 14) == 0) {
-            int* publisherIDs = getAllPublisherIDs(glavniHashSet);
-            if (publisherIDs) {
-                sendPublisherIDsToSubscriber(subscriberSocket, publisherIDs, glavniHashSet->size, &clientAddr);
-                free(publisherIDs);
+        // If data is available on the socket, read it
+        if (FD_ISSET(subscriberSocket, &readfds)) {
+            bytesReceived = recvfrom(subscriberSocket, buffer, MAX_BUFFER_SIZE, 0, (struct sockaddr*)&clientAddr, &addrLen);
+            if (bytesReceived == SOCKET_ERROR) {
+                if (WSAGetLastError() == WSAENOTSOCK)
+                    break;
+
+                printf("Error: Failed to receive data from subscriber. WSA Error Code: %d\n", WSAGetLastError());
+                continue;  // Continue if there's an error in receiving data
+            }
+
+            buffer[bytesReceived] = '\0';  // Null-terminate received data
+            printf("Message received from Subscriber: %s\n", buffer);
+
+            // Handle various subscriber requests
+            if (strncmp(buffer, "get_publishers", 14) == 0) {
+                int* publisherIDs = getAllPublisherIDs(glavniHashSet);
+                if (publisherIDs) {
+                    sendPublisherIDsToSubscriber(subscriberSocket, publisherIDs, glavniHashSet->size, &clientAddr);
+                    free(publisherIDs);
+                }
+                else {
+                    printf("Failed to allocate memory for publisher IDs\n");
+                }
+            }
+            else if (strncmp(buffer, "subscribe:", 10) == 0) {
+                int publisherID = atoi(buffer + 10);
+                int subscriberID = ntohs(clientAddr.sin_port);
+                if (addSubscriber(glavniHashSet, publisherID, subscriberID, subscriberSocket, clientAddr) == true) {
+                    sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                    printHashSet(glavniHashSet);
+                    printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
+                }
+                else {
+                    sendto(subscriberSocket, "Not Able to Subscribe", strlen("Not Able to Subscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                    printf("Subscriber %d failed to Subscribe to Publisher %d\n", subscriberID, publisherID);
+                }
+            }
+            else if (strncmp(buffer, "unsubscribe:", 12) == 0) {
+                int publisherID = atoi(buffer + 12);
+                int subscriberID = ntohs(clientAddr.sin_port);
+                if (removeSubscriber(glavniHashSet, publisherID, subscriberID) == true) {
+                    sendto(subscriberSocket, "Unsubscribed", strlen("Unsubscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                    printf("Subscriber %d removed from Publisher %d\n", subscriberID, publisherID);
+                }
+                else {
+                    sendto(subscriberSocket, "Unable to unsubscribe", strlen("Unable to unsubscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
+                    printf("Subscriber %d was unable to unsubscribe from Publisher %d\n", subscriberID, publisherID);
+                }
             }
             else {
-                printf("Failed to allocate memory for publisher IDs\n");
+                printf("Unknown subscriber request: %s\n", buffer);
             }
-        }
-        else if (strncmp(buffer, "subscribe:", 10) == 0) {
-            int publisherID = atoi(buffer + 10);
-            int subscriberID = ntohs(clientAddr.sin_port);
-            if (addSubscriber(glavniHashSet, publisherID, subscriberID, subscriberSocket, clientAddr) == true) {
-                sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
-                printHashSet(glavniHashSet);
-                printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
-            }
-            else {
-                sendto(subscriberSocket, "Not Able to Subscribe", strlen("Not Able to Subscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
-                printf("Subscriber %d failed to Subscribe to Publisher %d\n", subscriberID, publisherID);
-
-            }
-
-        }
-        else if (strncmp(buffer, "unsubscribe:", 12) == 0) {
-            int publisherID = atoi(buffer + 12);
-            int subscriberID = ntohs(clientAddr.sin_port);
-            if (removeSubscriber(glavniHashSet, publisherID, subscriberID) == true)
-            {
-                sendto(subscriberSocket, "Unsubscribed", strlen("Unsubscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
-                printf("Subscriber %d removed from Publisher %d\n", subscriberID, publisherID);
-            }
-            else {
-                sendto(subscriberSocket, "Unable to unsubscribe", strlen("Unable to unsubscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
-                printf("Subscriber %d was unable to unsubscribe from Publisher %d\n", subscriberID, publisherID);
-
-            }
-
-        }
-        else {
-            printf("Unknown subscriber request: %s\n", buffer);
         }
     }
+
+    printf("subscriber_processing_thread exiting...\n");
     return 0;
 }
+
 void InitializeThreadPool() {
     for (int i = 0; i < THREAD_POOL_SIZE; i++) {
         workerThreads[i] = CreateThread(NULL, 0, WorkerFunction, NULL, 0, NULL);
@@ -705,6 +734,10 @@ int main() {
     free(glavniHashSet);
     free(queueZaPoruke);
 
+    printf("Kraj Programa\n");
+
+    int randomProm23 = 0;
+    scanf_s("%d", &randomProm23);
 
     return 0;
 }

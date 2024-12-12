@@ -5,6 +5,8 @@
 #define INITIAL_CAPACITY 2         // Initial queue capacity
 #define MAX_MESSAGE_SIZE 256       // Maximum message size
 
+#include "globalVariable.h";
+
 // Function to initialize the queue
 void initQueue(Queue* queue) {
     // Initialize queue properties
@@ -161,9 +163,19 @@ void enqueue(Queue* queue, int idPublisher, const char* message) {
 
 
 int dequeue(Queue* queue, int* idPublisher, char* message) {
-    printf("Dequeuing: Front = %d, Size = %d\n", queue->front, queue->size);
 
-    WaitForSingleObject(queue->fullSemaphore, INFINITE);
+    // Use a short timeout to periodically check for shutdown
+    DWORD waitResult = WaitForSingleObject(queue->fullSemaphore, 1000);  //da bi se na 1 sekundu proverilo stalno da li je stigao signal za shutdownovanje i da se ne bi worker threadovi zakucali kod deque
+
+    // If WaitForSingleObject times out, check for shutdown condition
+    if (waitResult == WAIT_TIMEOUT) {
+        if (shutdown_variable == true) {
+            printf("Shutdown signal received. Exiting dequeue operation.\n");
+            return -1;  // Indicate an error if shutdown is requested
+        }
+        // If no message is ready, continue and retry waiting
+        return -1;
+    }
     EnterCriticalSection(&queue->criticalSection);
 
     if (queue->size == 0) {

@@ -5,6 +5,8 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 
+#include "../Admin/globalVariable.cpp"
+
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 12346
 #define BUFFER_SIZE 1024
@@ -20,6 +22,7 @@ void initializeWinSock() {
         exit(EXIT_FAILURE);
     }
 }
+
 
 // Function to handle continuous receiving of messages from publisher
 DWORD WINAPI receiveMessages(LPVOID param) {
@@ -149,7 +152,7 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     // Kreiranje novog soketa za komunikaciju
     SOCKET subscriberSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (subscriberSocket == INVALID_SOCKET) {
-        printf("Failed to create socket for Publisher %d.\n", publisherID);     //msm da je ovo socket za subscribera
+        printf("Failed to create socket for Publisher %d.\n", publisherID);
         return 1;
     }
 
@@ -169,24 +172,44 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     sprintf_s(buffer, "subscribe:%d", publisherID);
     sendto(subscriberSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-    // Primanje odgovora za subscribovanje
-    received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-    if (received > 0) {
-        buffer[received] = '\0';
-        printf("Subscription response for Publisher %d: %s\n", publisherID, buffer);
+    // Setup for select() with a timeout to check every second
+    fd_set readfds;
+    struct timeval timeout;
+    timeout.tv_sec = 1;  // Timeout set to 1 second
+    timeout.tv_usec = 0; // No microseconds
+
+    // Prijem odgovora od servera (opcionalno)
+    FD_ZERO(&readfds);  // Clear the readfds set
+    FD_SET(subscriberSocket, &readfds);  // Add the socket to the set
+
+    int ret = select(0, &readfds, NULL, NULL, &timeout);
+    if (ret == SOCKET_ERROR) {
+        printf("select() error for Publisher %d\n", publisherID);
+    }
+    else if (ret == 0) {
+        // Timeout reached, no data to read
+        printf("Timeout reached, no data received for Publisher %d.\n", publisherID);
     }
     else {
-        printf("No response for subscription to Publisher %d.\n", publisherID);
+        // Data available to read
+        if (FD_ISSET(subscriberSocket, &readfds)) {
+            received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (received > 0) {
+                buffer[received] = '\0';
+                printf("Subscription response for Publisher %d: %s\n", publisherID, buffer);
+            }
+            else {
+                printf("No response for subscription to Publisher %d.\n", publisherID);
+            }
+        }
     }
 
-
-    //primanje poruka od publishera preko admina
     // Getting the local port assigned by the OS
     struct sockaddr_in localAddr;
     int addrLen = sizeof(localAddr);
     int subscriberID;
     if (getsockname(subscriberSocket, (struct sockaddr*)&localAddr, &addrLen) == SOCKET_ERROR) {
-        printf("Failed to get local address information for Publisher \n");
+        printf("Failed to get local address information for Publisher %d\n", publisherID);
     }
     else {
         printf("Subscriber socket bound to port: %d\n", ntohs(localAddr.sin_port));
@@ -194,24 +217,48 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
 
     subscriberID = ntohs(localAddr.sin_port);
 
+    // Main loop for receiving messages
+    while (!shutdown_variable) {
+        FD_ZERO(&readfds);
+        FD_SET(subscriberSocket, &readfds);
 
-    while (keepReceiving==1)
-    {
-        received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-        if (received > 0) {
-            buffer[received] = '\0';
-            printf("SubscriberID: %d Message from Publisher %d: %s\n", subscriberID,publisherID, buffer);
+        ret = select(0, &readfds, NULL, NULL, &timeout);
+        if (ret == SOCKET_ERROR) {
+            printf("select() error while waiting for messages\n");
+            break;
+        }
+        else if (ret == 0) {
+            continue;
         }
         else {
-            printf("No from Publisher %d.\n", publisherID);
+            if (FD_ISSET(subscriberSocket, &readfds)) {
+                received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+                if (received > 0) {
+                    buffer[received] = '\0';
+                    printf("SubscriberID: %d Message from Publisher %d: %s\n", subscriberID, publisherID, buffer);
+                }
+                else {
+                    printf("No message received from Publisher %d.\n", publisherID);
+                }
+            }
         }
 
+        // Check for shutdown variable again before the next iteration
+        if (shutdown_variable) {
+            printf("Shutdown signal received, exiting loop for Publisher %d.\n", publisherID);
+            break;
+        }
     }
+
 
     // Zatvaranje soketa
     closesocket(subscriberSocket);
+
+    printf("Shutting down stressTestClientThread for Publisher %d\n", publisherID);
     return 0;
 }
+
+
 
 void startStressTest(SOCKET serverSocket) {
     struct sockaddr_in serverAddr;
@@ -335,7 +382,10 @@ int main() {
     // Čišćenje resursa
     closesocket(clientSocket);
     WSACleanup();
-    printf("Disconnected from the server.\n");
+    printf("Gasenje Subscribera.\n");
+
+    int pomocna5353 = 0;
+    scanf_s("%d", &pomocna5353);
 
     return 0;
 }

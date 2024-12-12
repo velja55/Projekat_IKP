@@ -128,12 +128,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="globalVariable.cpp" />
     <ClCompile Include="HashSetForSubscribers.cpp" />
     <ClCompile Include="LinkedList.cpp" />
     <ClCompile Include="MainAdmin.cpp" />
     <ClCompile Include="QueuePublisher.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="globalVariable.h" />
     <ClInclude Include="HashSetForSubscribers.h" />
     <ClInclude Include="LinkedList.h" />
     <ClInclude Include="Queue.h" />
