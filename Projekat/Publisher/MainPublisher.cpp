@@ -8,6 +8,8 @@
 #define MAX_BUFFER_SIZE 1024         // Definiše maksimalnu veličinu bafera (1024 bajta) za prijem i slanje podataka.
 #define SERVER_PORT 12345            // Definiše port na kojem server komunicira sa klijentima (UDP port 12345).
 
+
+const int stresCount = 50;
 // Struktura za prosleđivanje parametara u nit
 typedef struct {
     SOCKET sockfd;
@@ -234,17 +236,17 @@ DWORD WINAPI send_stress_message(LPVOID param) {
     int pomocni = 0;
 
     // Check periodically every second for shutdown
-    while (!shutdown_variable) {
-        //printf("Waiting for shutdown signal, current value of shutdown_variable: %d\n", shutdown_variable);
-        Sleep(8000);  // Sleep for 1 second to check more frequently
+    while (true) {
+        Sleep(8000);  // Pauza od 8 sekundi
+        //printf("SHOYT PUB %d\n",shutdown_variable);
 
-        // Check if shutdown has occurred
         if (shutdown_variable) {
-            break;
+            break;  // Izlazak iz petlje kada promenljiva postane true
         }
 
+       // printf("Shut down variable %d", shutdown_variable);
         random++;
-        pomocni = random % 10;  // %10 is the size of the random word array
+        pomocni = random % 10;  // Izbor reči iz RandomWords niza
 
         snprintf(buffer, sizeof(buffer), "operacija=2|publisher=stress_test|message=%s", RandomWords[pomocni]);
 
@@ -255,9 +257,9 @@ DWORD WINAPI send_stress_message(LPVOID param) {
             return 1;
         }
 
-        // Setup for select() with a timeout to check every second
-        FD_ZERO(&readfds);  // Clear the readfds set
-        FD_SET(new_sockfd, &readfds);  // Add the socket to the set
+        // Prijem odgovora
+        FD_ZERO(&readfds);
+        FD_SET(new_sockfd, &readfds);
 
         ret = select(0, &readfds, NULL, NULL, &timeout);
         if (ret == SOCKET_ERROR) {
@@ -266,7 +268,6 @@ DWORD WINAPI send_stress_message(LPVOID param) {
             return 1;
         }
         if (ret > 0 && FD_ISSET(new_sockfd, &readfds)) {
-            // Socket is ready to read
             bytes_received = recvfrom(new_sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
             if (bytes_received == SOCKET_ERROR) {
                 printf("Failed to receive message for publisher %d\n", 50000 + index);
@@ -279,7 +280,6 @@ DWORD WINAPI send_stress_message(LPVOID param) {
     }
 
     printf("Shutting down Stress Test\n");
-
     closesocket(new_sockfd);  // Close the socket after sending the message
     return 0;
 }
@@ -289,14 +289,14 @@ DWORD WINAPI send_stress_message(LPVOID param) {
 DWORD WINAPI stressTest(LPVOID param) {
     SOCKET sockfd = *(SOCKET*)param;  // Ne koristi se direktno ovde, ali se prosleđuje kao parametar
     //broj publishera
-    HANDLE threads[2];  // Niz za rukovanje nitima
-    int indices[2];     // Indeksi za niti
+    HANDLE threads[stresCount];  // Niz za rukovanje nitima
+    int indices[stresCount];     // Indeksi za niti
     int i;
 
     printf("Stress test started...\n");
 
     // Kreiranje 15 niti za slanje poruka
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < stresCount; i++) {
         indices[i] = i;  // Postavljanje indeksa za svaku nit
         threads[i] = CreateThread(NULL, 0, send_stress_message, &indices[i], 0, NULL);
         if (threads[i] == NULL) {
@@ -306,7 +306,7 @@ DWORD WINAPI stressTest(LPVOID param) {
     }
 
     // Čekanje da sve niti završe
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < stresCount; i++) {
         if (threads[i] != NULL) {
             WaitForSingleObject(threads[i], INFINITE);
             CloseHandle(threads[i]);

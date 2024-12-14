@@ -138,60 +138,52 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
 }
 
 DWORD WINAPI stressTestClientThread(LPVOID param) {
-    int publisherID = *(int*)param; // ID publisher-a koji nit obrađuje
+    int publisherID = *(int*)param;
     struct sockaddr_in serverAddr;
     char buffer[BUFFER_SIZE];
     int received;
 
-    // Konfiguracija server adrese
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(SERVER_PORT);
     inet_pton(AF_INET, SERVER_IP, &serverAddr.sin_addr);
 
-    // Kreiranje novog soketa za komunikaciju
     SOCKET subscriberSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (subscriberSocket == INVALID_SOCKET) {
         printf("Failed to create socket for Publisher %d.\n", publisherID);
         return 1;
     }
 
-    // Opcionalno bind-ovanje na specifičan port
     struct sockaddr_in clientAddr;
     memset(&clientAddr, 0, sizeof(clientAddr));
     clientAddr.sin_family = AF_INET;
     clientAddr.sin_addr.s_addr = INADDR_ANY;
-    clientAddr.sin_port = htons(0); // Automatski dodeljen port
+    clientAddr.sin_port = htons(0);
     if (bind(subscriberSocket, (struct sockaddr*)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR) {
         printf("Failed to bind socket for Publisher %d.\n", publisherID);
         closesocket(subscriberSocket);
         return 1;
     }
 
-    // Pretplata na publishere-a
     sprintf_s(buffer, "subscribe:%d", publisherID);
     sendto(subscriberSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-    // Setup for select() with a timeout to check every second
     fd_set readfds;
     struct timeval timeout;
-    timeout.tv_sec = 1;  // Timeout set to 1 second
-    timeout.tv_usec = 0; // No microseconds
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
 
-    // Prijem odgovora od servera (opcionalno)
-    FD_ZERO(&readfds);  // Clear the readfds set
-    FD_SET(subscriberSocket, &readfds);  // Add the socket to the set
+    FD_ZERO(&readfds);
+    FD_SET(subscriberSocket, &readfds);
 
     int ret = select(0, &readfds, NULL, NULL, &timeout);
     if (ret == SOCKET_ERROR) {
         printf("select() error for Publisher %d\n", publisherID);
     }
     else if (ret == 0) {
-        // Timeout reached, no data to read
         printf("Timeout reached, no data received for Publisher %d.\n", publisherID);
     }
     else {
-        // Data available to read
         if (FD_ISSET(subscriberSocket, &readfds)) {
             received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
             if (received > 0) {
@@ -204,7 +196,6 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
         }
     }
 
-    // Getting the local port assigned by the OS
     struct sockaddr_in localAddr;
     int addrLen = sizeof(localAddr);
     int subscriberID;
@@ -217,11 +208,10 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
 
     subscriberID = ntohs(localAddr.sin_port);
 
-    // Main loop for receiving messages
     while (!shutdown_variable) {
         FD_ZERO(&readfds);
         FD_SET(subscriberSocket, &readfds);
-
+        printf("SHUTDOWN VARIABLEEEE %d\n", shutdown_variable);
         ret = select(0, &readfds, NULL, NULL, &timeout);
         if (ret == SOCKET_ERROR) {
             printf("select() error while waiting for messages\n");
@@ -243,20 +233,19 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
             }
         }
 
-        // Check for shutdown variable again before the next iteration
         if (shutdown_variable) {
             printf("Shutdown signal received, exiting loop for Publisher %d.\n", publisherID);
             break;
         }
     }
 
-
-    // Zatvaranje soketa
     closesocket(subscriberSocket);
 
     printf("Shutting down stressTestClientThread for Publisher %d\n", publisherID);
     return 0;
 }
+
+
 
 
 
@@ -322,7 +311,7 @@ void startStressTest(SOCKET serverSocket) {
 
     // Čekanje da sve niti završe
     WaitForMultipleObjects(publisherCount, threads, TRUE, INFINITE);
-    for (int i = 0; i < publisherCount; i++) {
+    for (int i = 0; i < 30; i++) {
         CloseHandle(threads[i]);
     }
 
