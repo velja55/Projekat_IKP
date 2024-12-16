@@ -14,8 +14,9 @@
 // globalna prom al samo za subscribera 
 int keepReceiving = 1;
 
-const int stressCount = 1;        //promeniti na vise kada se ispravi bug
+const int stressCount = 50;        //promeniti na vise kada se ispravi bug
 
+int exit_stress_test = 0;         //lokalna glob prom za stress test subscribera
 
 
 // Function to initialize WinSock
@@ -43,6 +44,8 @@ DWORD WINAPI receiveMessages(LPVOID param) {
         }
         buffer[received] = '\0';  // Null-terminate the message
 
+        // Print the message from the publisher
+        printf("\nMessage from publisher: %s\n", buffer);
         //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
         if (strcmp(buffer, "EXIT") == 0)
         {
@@ -51,8 +54,13 @@ DWORD WINAPI receiveMessages(LPVOID param) {
 
         }
 
-        // Print the message from the publisher
-        printf("\nMessage from publisher: %s\n", buffer);
+        if (strcmp(buffer, "Unsubscribed by ADMIN") == 0)
+        {
+            keepReceiving = 0;
+            return 0;
+
+        }
+
     }
 
     return 0;
@@ -117,6 +125,19 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
             // Print server response
             printf("Server Response: %s\n", buffer);
 
+            //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
+            if (strcmp(buffer, "EXIT") == 0)
+            {
+                keepReceiving = 0;
+                break;
+            }
+
+            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0)
+            {
+                keepReceiving = 0;
+                break;
+            }
+
         }
         else if (choice == 2) {
             printf("Enter the ID of the publisher: ");
@@ -135,7 +156,18 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
 
             // Print server response
             printf("Server Response: %s\n", buffer);
+            //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
+            if (strcmp(buffer, "EXIT") == 0)
+            {
+                keepReceiving = 0;
+                break;
+            }
 
+            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0)
+            {
+                keepReceiving = 0;
+                break;
+            }
 
         }
         else {
@@ -192,7 +224,7 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     fd_set readfds;
     struct timeval timeout = { 1, 0 };  // 1 second timeout
 
-    while (!shutdown_variable) {  // Check the shutdown variable periodically
+    while (exit_stress_test==0) {  // Check the shutdown variable periodically
         // Periodic check without blocking the select call
 
         FD_ZERO(&readfds);
@@ -212,6 +244,7 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
                 //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
                 if (strcmp(buffer, "EXIT") == 0)
                 {
+                    exit_stress_test = 1;                                                   //samo 1 subscriber ce primiti od admina da treba da se ugasi i onda on svim ostalim saopstava tako sto menja lokalnu globalnu promenljivu samo kod susbcribera
                     break;
 
                 }
@@ -221,7 +254,7 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
         }
 
         // If shutdown signal has been set, break out of the loop
-        if (shutdown_variable) {
+        if (exit_stress_test==1) {
             break;
         }
 
@@ -356,8 +389,8 @@ int main() {
         // Stres test
         printf("Starting stress test...\n");
         startStressTest(clientSocket); // Funkcija koja pokreće stres test
-        printf("Press enter to close");
-        scanf_s("%d", &choice);
+       // printf("Press enter to close");
+       // scanf_s("%d", &choice);
     }
     else {
         printf("Invalid choice. Exiting.\n");

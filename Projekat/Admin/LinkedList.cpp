@@ -12,7 +12,7 @@ void initList(LinkedList* list) {
 // Funkcija za dodavanje parova ključ-vrednost u listu (ključ, socket, adresa)
 bool add(LinkedList* list, int key, SOCKET socket, struct sockaddr_in addr) {
     if (list->size == list->maxSize) {
-        printf("Max Size liste je dostignut. Nije moguce dodati pretplatnika za ovog izdavaca.\n");
+        printf("Max Size liste za Subscribere je dostignut. Nije moguce dodati pretplatnika za ovog izdavaca.\n");
         return false;
     }
 
@@ -99,7 +99,7 @@ bool removeElement(LinkedList* list, int key) {
         previous = current;
         current = current->next;
     }
-    printf("Pretplatnik sa ID %d nije pronađen.\n", key);
+    printf("Pretplatnik sa ID %d nije pronadjen.\n", key);
     return false;
 }
 
@@ -114,5 +114,5 @@ void freeList(LinkedList* list) {
     }
     list->head = NULL;
     list->size = 0;
-    printf("Lista je uspešno oslobođena.\n");
+    printf("Lista je uspesno oslobodjena.\n");
 }

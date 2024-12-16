@@ -389,9 +389,12 @@ int main() {
     WaitForSingleObject(threadHandle, INFINITE);
     CloseHandle(threadHandle);
     int neki;
-    printf("Gasenje Publisher Programa \n");
-    scanf_s("%d", &neki);
+
     closesocket(sockfd);
     WSACleanup();
+
+
+    printf("Gasenje Publisher Programa \n");
+    scanf_s("%d", &neki);
     return 0;
 }
