@@ -1,33 +1,33 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\",
+  "WorkspaceRootPath": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{551C7A9D-9570-40A2-AC0F-02FAB4FB00DE}|Publisher\\Publisher.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{551C7A9D-9570-40A2-AC0F-02FAB4FB00DE}|Publisher\\Publisher.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{551C7A9D-9570-40A2-AC0F-02FAB4FB00DE}|Publisher\\Publisher.vcxproj|solutionrelative:Publisher\\MainPublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|solutionrelative:Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\globalVariable.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\QueuePublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\globalVariable.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
@@ -44,11 +44,11 @@
               "$type": "Document",
               "DocumentIndex": 4,
               "Title": "QueuePublisher.cpp",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp",
               "RelativeDocumentMoniker": "Admin\\QueuePublisher.cpp",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp",
               "RelativeToolTip": "Admin\\QueuePublisher.cpp",
-              "ViewState": "AgIAAB4AAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-12-13T12:40:01.771Z",
               "EditorCaption": ""
@@ -57,24 +57,23 @@
               "$type": "Document",
               "DocumentIndex": 5,
               "Title": "Queue.h",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
               "RelativeDocumentMoniker": "Admin\\Queue.h",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
               "RelativeToolTip": "Admin\\Queue.h",
               "ViewState": "AgIAAAIAAAAAAAAAAAAcwC4AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-13T13:04:12.659Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-12-13T13:04:12.659Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "MainPublisher.cpp",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
               "RelativeDocumentMoniker": "Publisher\\MainPublisher.cpp",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
               "RelativeToolTip": "Publisher\\MainPublisher.cpp",
-              "ViewState": "AgIAAIEAAAAAAAAAAAAAAJUAAAAAAAAAAAAAAA==",
+              "ViewState": "AQIAAIEAAAAAAAAAAAAgwJsAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-12-13T12:39:08.275Z",
               "EditorCaption": ""
@@ -83,11 +82,11 @@
               "$type": "Document",
               "DocumentIndex": 2,
               "Title": "MainAdmin.cpp",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
               "RelativeDocumentMoniker": "Admin\\MainAdmin.cpp",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
               "RelativeToolTip": "Admin\\MainAdmin.cpp",
-              "ViewState": "AgIAAPYAAAAAAAAAAAAcwCcBAAAMAAAAAAAAAA==",
+              "ViewState": "AQIAAOUBAAAAAAAAAIAwwPQBAAAoAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-12-13T11:14:36.174Z",
               "EditorCaption": ""
@@ -96,11 +95,11 @@
               "$type": "Document",
               "DocumentIndex": 3,
               "Title": "globalVariable.cpp",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.cpp",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.cpp",
               "RelativeDocumentMoniker": "Admin\\globalVariable.cpp",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.cpp",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.cpp",
               "RelativeToolTip": "Admin\\globalVariable.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAoAAAAAAAAAA==",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAMAAAAjAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-12-13T11:02:14.291Z",
               "EditorCaption": ""
@@ -109,9 +108,9 @@
               "$type": "Document",
               "DocumentIndex": 6,
               "Title": "globalVariable.h",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.h",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.h",
               "RelativeDocumentMoniker": "Admin\\globalVariable.h",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.h",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Admin\\globalVariable.h",
               "RelativeToolTip": "Admin\\globalVariable.h",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
@@ -121,11 +120,11 @@
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "MainSubscriber.cpp",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp",
+              "DocumentMoniker": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp",
               "RelativeDocumentMoniker": "Subscriber\\MainSubscriber.cpp",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp",
+              "ToolTip": "C:\\Users\\vladi\\OneDrive\\Desktop\\IKP\\Projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp",
               "RelativeToolTip": "Subscriber\\MainSubscriber.cpp",
-              "ViewState": "AgIAANIAAAAAAAAAAAAAAPUAAAABAAAAAAAAAA==",
+              "ViewState": "AQIAAFEAAAAAAAAAAAAAAF0AAAAIAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-11-23T14:50:02.414Z",
               "EditorCaption": ""

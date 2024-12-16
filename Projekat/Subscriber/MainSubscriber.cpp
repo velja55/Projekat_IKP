@@ -11,8 +11,12 @@
 #define SERVER_PORT 12346
 #define BUFFER_SIZE 1024
 
-// Global variable to stop receiving messages when the program exits
+// globalna prom al samo za subscribera 
 int keepReceiving = 1;
+
+const int stressCount = 1;        //promeniti na vise kada se ispravi bug
+
+
 
 // Function to initialize WinSock
 void initializeWinSock() {
@@ -30,7 +34,7 @@ DWORD WINAPI receiveMessages(LPVOID param) {
     char buffer[BUFFER_SIZE];
     int received;
 
-    while (keepReceiving) {
+    while (!shutdown_variable) {
         // Receive the server's message
         received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
         if (received <= 0) {
@@ -38,6 +42,14 @@ DWORD WINAPI receiveMessages(LPVOID param) {
             return 0;
         }
         buffer[received] = '\0';  // Null-terminate the message
+
+        //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
+        if (strcmp(buffer, "EXIT") == 0)
+        {
+            keepReceiving = 0;
+            return 0;
+
+        }
 
         // Print the message from the publisher
         printf("\nMessage from publisher: %s\n", buffer);
@@ -77,7 +89,7 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     printf("2. Unsubscribe from a publisher\n");
     printf("3. Quit\n");
     printf("Enter your choice: ");
-    while (1) {
+    while (keepReceiving==1) {
         // Let the user choose an action
         
         scanf_s("%d", &choice);
@@ -168,37 +180,8 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
     sprintf_s(buffer, "subscribe:%d", publisherID);
     sendto(subscriberSocket, buffer, strlen(buffer), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-    fd_set readfds;
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
-
-    FD_ZERO(&readfds);
-    FD_SET(subscriberSocket, &readfds);
-
-    int ret = select(0, &readfds, NULL, NULL, &timeout);
-    if (ret == SOCKET_ERROR) {
-        printf("select() error for Publisher %d\n", publisherID);
-    }
-    else if (ret == 0) {
-        printf("Timeout reached, no data received for Publisher %d.\n", publisherID);
-    }
-    else {
-        if (FD_ISSET(subscriberSocket, &readfds)) {
-            received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-            if (received > 0) {
-                buffer[received] = '\0';
-                printf("Subscription response for Publisher %d: %s\n", publisherID, buffer);
-            }
-            else {
-                printf("No response for subscription to Publisher %d.\n", publisherID);
-            }
-        }
-    }
-
     struct sockaddr_in localAddr;
     int addrLen = sizeof(localAddr);
-    int subscriberID;
     if (getsockname(subscriberSocket, (struct sockaddr*)&localAddr, &addrLen) == SOCKET_ERROR) {
         printf("Failed to get local address information for Publisher %d\n", publisherID);
     }
@@ -206,44 +189,52 @@ DWORD WINAPI stressTestClientThread(LPVOID param) {
         printf("Subscriber socket bound to port: %d\n", ntohs(localAddr.sin_port));
     }
 
-    subscriberID = ntohs(localAddr.sin_port);
+    fd_set readfds;
+    struct timeval timeout = { 1, 0 };  // 1 second timeout
 
-    while (!shutdown_variable) {
+    while (!shutdown_variable) {  // Check the shutdown variable periodically
+        // Periodic check without blocking the select call
+
         FD_ZERO(&readfds);
         FD_SET(subscriberSocket, &readfds);
-        printf("SHUTDOWN VARIABLEEEE %d\n", shutdown_variable);
-        ret = select(0, &readfds, NULL, NULL, &timeout);
+
+        int ret = select(0, &readfds, NULL, NULL, &timeout);
         if (ret == SOCKET_ERROR) {
             printf("select() error while waiting for messages\n");
             break;
         }
-        else if (ret == 0) {
-            continue;
-        }
-        else {
-            if (FD_ISSET(subscriberSocket, &readfds)) {
-                received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
-                if (received > 0) {
-                    buffer[received] = '\0';
-                    printf("SubscriberID: %d Message from Publisher %d: %s\n", subscriberID, publisherID, buffer);
+
+        if (ret > 0 && FD_ISSET(subscriberSocket, &readfds)) {
+            received = recvfrom(subscriberSocket, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (received > 0) {
+                buffer[received] = '\0';
+
+                //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
+                if (strcmp(buffer, "EXIT") == 0)
+                {
+                    break;
+
                 }
-                else {
-                    printf("No message received from Publisher %d.\n", publisherID);
-                }
+
+                printf("SubscriberID: %d Message from Publisher %d: %s\n", ntohs(localAddr.sin_port), publisherID, buffer);
             }
         }
 
+        // If shutdown signal has been set, break out of the loop
         if (shutdown_variable) {
-            printf("Shutdown signal received, exiting loop for Publisher %d.\n", publisherID);
             break;
         }
+
+        // Sleep to avoid tight looping
+        Sleep(100);  // Check every 100 milliseconds
     }
 
+    printf("Shutdown signal received, exiting thread for Publisher %d.\n", publisherID);
     closesocket(subscriberSocket);
-
-    printf("Shutting down stressTestClientThread for Publisher %d\n", publisherID);
     return 0;
 }
+
+
 
 
 
@@ -301,8 +292,8 @@ void startStressTest(SOCKET serverSocket) {
     printf("Parsed %d publishers for subscription.\n", publisherCount);
 
     // Kreiranje niti za svaki publisher
-    HANDLE threads[30]; // Maksimalan broj niti
-    for (int i = 0; i <30; i++) {
+    HANDLE threads[stressCount]; // Maksimalan broj niti
+    for (int i = 0; i < stressCount; i++) {
         threads[i] = CreateThread(NULL, 0, stressTestClientThread, &publisherIDs[i%publisherCount], 0, NULL);
         if (threads[i] == NULL) {
             printf("Failed to create thread for Publisher %d.\n", publisherIDs[i]);
@@ -310,12 +301,16 @@ void startStressTest(SOCKET serverSocket) {
     }
 
     // Čekanje da sve niti završe
-    WaitForMultipleObjects(publisherCount, threads, TRUE, INFINITE);
-    for (int i = 0; i < 30; i++) {
-        CloseHandle(threads[i]);
+    for (int i = 0; i < stressCount; i++) {
+        if (threads[i] != NULL) {
+            WaitForSingleObject(threads[i], INFINITE);
+            CloseHandle(threads[i]);
+        }
     }
 
     printf("Stress test completed.\n");
+
+    return;
 }
 
 

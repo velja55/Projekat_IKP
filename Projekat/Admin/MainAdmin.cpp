@@ -294,6 +294,7 @@ DWORD WINAPI admin_console_thread(LPVOID arg) {
 
             // Signal the worker threads to stop
             shutdown_variable = true;
+
             return 0;
 
         }
@@ -493,9 +494,14 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
     timeout.tv_sec = 1;  // Timeout set to 1 second
     timeout.tv_usec = 0; // No microseconds
 
-    while (shutdown_variable == false) {
+    while (true) {
         FD_ZERO(&readfds);
         FD_SET(subscriberSocket, &readfds);  // Monitor the subscriber socket
+        // If the shutdown signal is set, exit gracefully
+        if (shutdown_variable == true) {
+            sendto(subscriberSocket, "EXIT", strlen("EXIT"), 0, (struct sockaddr*)&clientAddr, addrLen);
+            break;
+        }
 
         // Use select() to check for data availability and shutdown signal
         ret = select(0, &readfds, NULL, NULL, &timeout);
@@ -505,10 +511,7 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
             continue;  // Timeout occurred, nothing to read, just loop and check shutdown
         }
 
-        // If the shutdown signal is set, exit gracefully
-        if (shutdown_variable == true) {
-            break;
-        }
+
 
         // If data is available on the socket, read it
         if (FD_ISSET(subscriberSocket, &readfds)) {

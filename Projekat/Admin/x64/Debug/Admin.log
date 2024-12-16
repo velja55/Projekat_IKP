@@ -1,3 +1,12 @@
-﻿  QueuePublisher.cpp
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\QueuePublisher.cpp(9,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
-  Admin.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
+﻿  MainAdmin.cpp
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(61,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(287,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(434,50): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(451,50): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(473,60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(502,52): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(545,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(550,77): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(558,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(562,77): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Admin.vcxproj -> C:\Users\vladi\OneDrive\Desktop\IKP\Projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
