@@ -4,7 +4,7 @@
 #include <WinSock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
-
+#include <conio.h>
 #include "../Admin/globalVariable.cpp"
 
 #define SERVER_IP "127.0.0.1"
@@ -17,6 +17,14 @@ int keepReceiving = 1;
 const int stressCount = 50;        //promeniti na vise kada se ispravi bug
 
 int exit_stress_test = 0;         //lokalna glob prom za stress test subscribera
+
+int programExit = 0;
+
+typedef struct {
+    SOCKET clientSocket;
+    struct sockaddr_in serverAddr;
+} ThreadArgs;
+
 
 
 // Function to initialize WinSock
@@ -35,7 +43,7 @@ DWORD WINAPI receiveMessages(LPVOID param) {
     char buffer[BUFFER_SIZE];
     int received;
 
-    while (!shutdown_variable) {
+    while (!programExit) { // Ovaj uslov će osigurati da petlja prestane kada programExit bude postavljen na 1
         // Receive the server's message
         received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
         if (received <= 0) {
@@ -46,30 +54,29 @@ DWORD WINAPI receiveMessages(LPVOID param) {
 
         // Print the message from the publisher
         printf("\nMessage from publisher: %s\n", buffer);
-        //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
-        if (strcmp(buffer, "EXIT") == 0)
-        {
-            keepReceiving = 0;
-            return 0;
 
+        if (strcmp(buffer, "EXIT") == 0) {
+            printf("Shutdown signal received. Exiting program...\n");
+            programExit = 1; // Signalizacija za kraj programa
+            return 0;
         }
 
-        if (strcmp(buffer, "Unsubscribed by ADMIN") == 0)
-        {
+        if (strcmp(buffer, "Unsubscribed by ADMIN") == 0) {
             keepReceiving = 0;
             return 0;
-
         }
-
     }
 
     return 0;
 }
 
 // Function to handle communication with the server
-void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
+DWORD WINAPI communicateWithServer(LPVOID args) {
+    ThreadArgs* threadArgs = (ThreadArgs*)args; // Cast args to ThreadArgs pointer
+    SOCKET serverSocket = threadArgs->clientSocket;
+    struct sockaddr_in serverAddr = threadArgs->serverAddr;
     char buffer[BUFFER_SIZE];
-    int publisherID, choice;
+    int publisherID,choice;
 
     // Request the list of publishers from the server
     printf("Requesting list of publishers...\n");
@@ -79,7 +86,7 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     int received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
     if (received <= 0) {
         printf("Error: Failed to receive data from server.\n");
-        return;
+        return 1;
     }
     buffer[received] = '\0';  // Null-terminate the string
 
@@ -90,20 +97,24 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     HANDLE receiverThread = CreateThread(NULL, 0, receiveMessages, &serverSocket, 0, NULL);
     if (receiverThread == NULL) {
         printf("Error: Failed to create receiver thread.\n");
-        return;
+        return 1;
     }
+
     printf("Choose an option:\n");
     printf("1. Subscribe to a publisher\n");
     printf("2. Unsubscribe from a publisher\n");
     printf("3. Quit\n");
-    printf("Enter your choice: ");
-    while (keepReceiving==1) {
-        // Let the user choose an action
-        
+
+    while (!programExit) { // Uslov za izlazak iz ove petlje
+        if (programExit == 1) {
+            return 1;
+        }
+        printf("Promenljiva za exitt:%d\n", programExit);
+        printf("Enter your choice:");
         scanf_s("%d", &choice);
 
-        if (choice == 3) {
-            keepReceiving = 0;  // Stop receiving messages
+        if (choice == 3 || programExit) {
+            programExit = 1;
             break;
         }
 
@@ -118,24 +129,21 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
             received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
             if (received <= 0) {
                 printf("Error: Failed to receive data from server.\n");
-                return;
+                return 1;
             }
             buffer[received] = '\0';  // Null-terminate the response
 
             // Print server response
             printf("Server Response: %s\n", buffer);
 
-            //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
-            if (strcmp(buffer, "EXIT") == 0)
-            {
-                keepReceiving = 0;
-                break;
+            if (strcmp(buffer, "EXIT") == 0) {
+                programExit = 1;
+                return 0;
             }
 
-            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0)
-            {
-                keepReceiving = 0;
-                break;
+            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0) {
+                programExit = 1;
+                return 0;
             }
 
         }
@@ -150,23 +158,21 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
             received = recvfrom(serverSocket, buffer, sizeof(buffer), 0, NULL, NULL);
             if (received <= 0) {
                 printf("Error: Failed to receive data from server.\n");
-                return;
+                return 1;
             }
             buffer[received] = '\0';  // Null-terminate the response
 
             // Print server response
             printf("Server Response: %s\n", buffer);
-            //ovo je jedini nacin da se subscriber ugasi jer uopste ne moze da vidi globalnu promenljivu kada se promeni
-            if (strcmp(buffer, "EXIT") == 0)
-            {
-                keepReceiving = 0;
-                break;
+
+            if (strcmp(buffer, "EXIT") == 0) {
+                programExit = 1;
+                return 0;
             }
 
-            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0)
-            {
-                keepReceiving = 0;
-                break;
+            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0) {
+                programExit = 1;
+                return 0;
             }
 
         }
@@ -179,7 +185,9 @@ void communicateWithServer(SOCKET serverSocket, sockaddr_in serverAddr) {
     // Wait for the receiver thread to finish
     WaitForSingleObject(receiverThread, INFINITE);
     CloseHandle(receiverThread);
+    return 0;
 }
+
 
 DWORD WINAPI stressTestClientThread(LPVOID param) {
     int publisherID = *(int*)param;
@@ -382,8 +390,16 @@ int main() {
     scanf_s("%d", &choice);
 
     if (choice == 1) {
-        // Standardan rad
-        communicateWithServer(clientSocket, serverAddr);
+        printf("Starting standard communication...\n");
+        // Create a thread for communication
+        ThreadArgs args = { clientSocket, serverAddr };
+        HANDLE hThread = CreateThread(NULL, 0, communicateWithServer, &args, 0, NULL);
+        if (hThread == NULL) {
+            printf("Error creating communication thread.\n");
+            return 1;
+        }
+        WaitForSingleObject(hThread, INFINITE); // Wait for the thread to finish
+        CloseHandle(hThread);
     }
     else if (choice == 2) {
         // Stres test

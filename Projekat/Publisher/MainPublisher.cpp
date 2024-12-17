@@ -357,7 +357,7 @@ int main() {
     }
 
     int choice;
-    HANDLE threadHandle;
+    HANDLE publisherThread;
 
     printf("Choose an option:\n");
     printf("1. Normal message sending\n");
@@ -367,10 +367,10 @@ int main() {
     getchar();  // Uklanja '\n' iz input buffer-a
 
     if (choice == 1) {
-        threadHandle = CreateThread(NULL, 0, send_message, &sockfd, 0, NULL);
+        publisherThread = CreateThread(NULL, 0, send_message, &sockfd, 0, NULL);
     }
     else if (choice == 2) {
-        threadHandle = CreateThread(NULL, 0, stressTest, &sockfd, 0, NULL);
+        publisherThread = CreateThread(NULL, 0, stressTest, &sockfd, 0, NULL);
     }
     else {
         printf("Invalid choice. Exiting.\n");
@@ -379,15 +379,15 @@ int main() {
         return 1;
     }
 
-    if (threadHandle == NULL) {
+    if (publisherThread == NULL) {
         printf("Failed to create thread\n");
         closesocket(sockfd);
         WSACleanup();
         return 1;
     }
 
-    WaitForSingleObject(threadHandle, INFINITE);
-    CloseHandle(threadHandle);
+    WaitForSingleObject(publisherThread, INFINITE);
+    CloseHandle(publisherThread);
     int neki;
 
     closesocket(sockfd);
