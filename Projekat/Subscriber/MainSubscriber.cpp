@@ -172,7 +172,7 @@ DWORD WINAPI communicateWithServer(LPVOID args) {
 
             if (strcmp(buffer, "Unsubscribed by ADMIN") == 0) {
                 programExit = 1;
-                return 0;
+                return 1;
             }
 
         }

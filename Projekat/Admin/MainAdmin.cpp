@@ -31,6 +31,51 @@ typedef struct {
 
 HANDLE workerThreads[THREAD_POOL_SIZE];  // Array to store thread handles
 
+
+void sendExitToAllSubscribers(HashSet* hashSet) {
+    const char* exitMessage = "EXIT"; // Poruka koja se šalje
+    EnterCriticalSection(&hashSet->criticalSection); // Osiguravanje sinhronizacije
+
+    // Prolaz kroz sve bucket-e
+    for (size_t i = 0; i < hashSet->capacity; i++) {
+        HashNode* currentPublisher = hashSet->buckets[i];
+
+        // Prolaz kroz svaki `HashNode` unutar trenutnog `bucket`a
+        while (currentPublisher != NULL) {
+            Node* currentSubscriber = currentPublisher->subscribers.head;
+
+            // Prolaz kroz `LinkedList` (sve subscribere za trenutnog publishera)
+            while (currentSubscriber != NULL) {
+                int result = sendto(
+                    currentSubscriber->socket,
+                    exitMessage,
+                    strlen(exitMessage),
+                    0,
+                    (struct sockaddr*)&currentSubscriber->addr,
+                    sizeof(currentSubscriber->addr)
+                );
+
+                if (result == SOCKET_ERROR) {
+                    printf("Greška pri slanju poruke subscriberu sa ID %d: %d\n",
+                        currentSubscriber->key, WSAGetLastError());
+                }
+                else {
+                    printf("EXIT poruka poslata subscriberu sa ID %d.\n", currentSubscriber->key);
+                }
+
+                currentSubscriber = currentSubscriber->next; // Sledeći subscriber
+            }
+
+            currentPublisher = currentPublisher->next; // Sledeći publisher u bucket-u
+        }
+    }
+
+    LeaveCriticalSection(&hashSet->criticalSection); // Oslobađanje kritične sekcije
+}
+
+
+
+
 DWORD WINAPI WorkerFunction(LPVOID lpParam) {
     // Set up for periodic shutdown check
     while (TRUE) {
@@ -503,7 +548,7 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
         FD_SET(subscriberSocket, &readfds);  // Monitor the subscriber socket
         // If the shutdown signal is set, exit gracefully
         if (shutdown_variable == true) {
-            sendto(subscriberSocket, "EXIT", strlen("EXIT"), 0, (struct sockaddr*)&clientAddr, addrLen);
+            sendExitToAllSubscribers(glavniHashSet);
             break;
         }
 
