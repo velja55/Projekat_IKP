@@ -1,6 +1,6 @@
 ﻿  MainPublisher.cpp
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(65,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(137,34): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(220,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(275,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(76,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(109,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(196,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(251,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   Publisher.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Publisher.exe

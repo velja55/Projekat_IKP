@@ -3,20 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{551C7A9D-9570-40A2-AC0F-02FAB4FB00DE}|Publisher\\Publisher.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{551C7A9D-9570-40A2-AC0F-02FAB4FB00DE}|Publisher\\Publisher.vcxproj|solutionrelative:Publisher\\MainPublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|solutionrelative:Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\Queue.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,44 +26,44 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "Queue.h",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
               "RelativeDocumentMoniker": "Admin\\Queue.h",
               "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
               "RelativeToolTip": "Admin\\Queue.h",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-12-17T22:37:28.757Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-12-17T22:37:28.757Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 1,
               "Title": "MainAdmin.cpp",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
               "RelativeDocumentMoniker": "Admin\\MainAdmin.cpp",
               "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
               "RelativeToolTip": "Admin\\MainAdmin.cpp",
-              "ViewState": "AgIAAOMBAAAAAAAAAAAUwPkBAABKAAAAAAAAAA==",
+              "ViewState": "AgIAAI0BAAAAAAAAAAAnwKMBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-17T16:39:39.487Z"
+              "WhenOpened": "2024-12-17T16:39:39.487Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "MainPublisher.cpp",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
               "RelativeDocumentMoniker": "Publisher\\MainPublisher.cpp",
               "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
               "RelativeToolTip": "Publisher\\MainPublisher.cpp",
-              "ViewState": "AgIAABwBAAAAAAAAAAAswCEBAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAABsBAAAAAAAAAAAAAIwAAAADAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-16T14:11:08.367Z",
+              "WhenOpened": "2024-12-18T12:52:53.055Z",
               "EditorCaption": ""
             },
             {
@@ -74,7 +74,7 @@
               "RelativeDocumentMoniker": "Subscriber\\MainSubscriber.cpp",
               "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp",
               "RelativeToolTip": "Subscriber\\MainSubscriber.cpp",
-              "ViewState": "AgIAAGMAAAAAAAAAAAAAAG8BAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAG8BAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-11-23T14:50:02.414Z",
               "EditorCaption": ""

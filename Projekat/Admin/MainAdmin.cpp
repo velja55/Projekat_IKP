@@ -429,10 +429,14 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
                 enqueue(queueZaPoruke, publisherID, poruka);  // Add messages to the queue
                 printQueue(queueZaPoruke);
             }
+            if (shutdown_variable == true) {
+                sendto(sockfd, "EXIT", strlen("EXIT"), 0, (struct sockaddr*)&client_addr, addr_len);
+                break;
+            }
+            else {
 
-            // Send acknowledgment back to the client
-            sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
-
+                sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
+            }
             // Free dynamically allocated memory for the message (to avoid memory leaks)
             free(poruka);
         }

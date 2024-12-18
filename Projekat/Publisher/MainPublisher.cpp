@@ -33,75 +33,14 @@ const char* RandomWords[10] = {
 };
 
 // Funkcija za kontinuirano slanje novih poruka serveru     SEKVENCIJALNI PRISTUP
-DWORD WINAPI send_continuous_messages(LPVOID param) {
+DWORD WINAPI send_message(LPVOID param) {
     ThreadParams* params = (ThreadParams*)param;
     SOCKET sockfd = params->sockfd;
     struct sockaddr_in server_addr = params->server_addr;
     char message[MAX_BUFFER_SIZE];
     char buffer[MAX_BUFFER_SIZE];
     int bytes_received;
-
-    // Set socket to non-blocking
-    u_long mode = 1; // 1 to enable non-blocking mode
-    if (ioctlsocket(sockfd, FIONBIO, &mode) != 0) {
-        perror("Failed to set socket to non-blocking");
-        exit(1);
-    }
-
-    while (shutdown_variable == false) {
-        printf("Enter a message to send (or 'exit' to quit): ");
-        fgets(message, sizeof(message), stdin);
-        message[strcspn(message, "\n")] = '\0';  // Remove newline character
-
-        if (strcmp(message, "exit") == 0) {
-            printf("Exiting message sender...\n");
-            break;  // Exit the loop and terminate the thread
-        }
-
-        // Combine the publisher name and message into one string for sending
-        snprintf(buffer, sizeof(buffer), "operacija=2|publisher=%s|message=%s", params->publisherName, message);
-
-        // Send the message to the server
-        int bytes_sent = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
-        if (bytes_sent == SOCKET_ERROR) {
-            printf("sendto failed: %d\n", WSAGetLastError());
-            break;  // Exit the loop if sending fails
-        }
-
-        // Receive the response from the server (non-blocking)
-        bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-
-        // Check if the socket is not ready to receive (non-blocking behavior)
-        if (bytes_received == SOCKET_ERROR) {
-            int error_code = WSAGetLastError();
-            if (error_code == WSAEWOULDBLOCK) {
-                // No data available yet, continue the loop
-                Sleep(100);  // Sleep for 100 ms before retrying
-                continue;
-            }
-            else {
-                printf("recvfrom failed: %d\n", error_code);
-                break;  // Exit the loop if an error other than WSAEWOULDBLOCK occurs
-            }
-        }
-
-        buffer[bytes_received] = '\0';  // Null-terminate the received message
-        printf("Received from server: %s\n", buffer);
-    }
-
-    free(params); // Free memory allocated for parameters
-    return 0;
-}
-
-
-// Funkcija za slanje inicijalne poruke serveru
-DWORD WINAPI send_message(LPVOID param) {
-    SOCKET sockfd = *(SOCKET*)param;
-    struct sockaddr_in server_addr;
-    char buffer[MAX_BUFFER_SIZE];
-    char message[MAX_BUFFER_SIZE];
     int max_size;
-    int bytes_received;
 
     // Konfiguracija servera
     memset(&server_addr, 0, sizeof(server_addr));
@@ -134,7 +73,12 @@ DWORD WINAPI send_message(LPVOID param) {
     snprintf(buffer, sizeof(buffer), "operacija=1|publisher=%s|maxsize=%d", message, max_size);
 
     // Slanje inicijalne poruke serveru
-    sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    int bytes_sent = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    if (bytes_sent == SOCKET_ERROR) {
+        printf("sendto failed: %d\n", WSAGetLastError());
+        closesocket(sockfd);
+        return 1;
+    }
 
     // Prijem odgovora od servera
     bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
@@ -147,27 +91,59 @@ DWORD WINAPI send_message(LPVOID param) {
     buffer[bytes_received] = '\0';
     printf("Received from server: %s\n", buffer);
 
-    // Kreiranje nove niti za kontinuirano slanje poruka
-    ThreadParams* params = (ThreadParams*)malloc(sizeof(ThreadParams));
-    params->sockfd = sockfd;
-    params->server_addr = server_addr;
-    params->maxSize = max_size;
-    strcpy_s(params->publisherName, message);
+    // Kontinuirano slanje poruka nakon inicijalne
+    while (shutdown_variable == false) {
+        printf("Enter a message to send (or 'exit' to quit): ");
+        fgets(message, sizeof(message), stdin);
+        message[strcspn(message, "\n")] = '\0';  // Remove newline character
 
-    HANDLE continuousThread = CreateThread(
-        NULL, 0, send_continuous_messages, params, 0, NULL);
+        if (strcmp(message, "exit") == 0) {
+            printf("Exiting message sender...\n");
+            break;  // Exit the loop and terminate the thread
+        }
 
-    if (continuousThread == NULL) {
-        printf("Failed to create continuous message thread\n");
-        free(params);
+        // Kombinovanje publisher name i message u jednu poruku
+        snprintf(buffer, sizeof(buffer), "operacija=2|publisher=%s|message=%s", params->publisherName, message);
+
+        // Slanje poruke serveru
+        int bytes_sent = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+        if (bytes_sent == SOCKET_ERROR) {
+            printf("sendto failed: %d\n", WSAGetLastError());
+            break;  // Exit the loop if sending fails
+        }
+
+        // Prijem odgovora od servera (non-blocking)
+        bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+
+        // Provera da li soket nije spreman za prijem (non-blocking behavior)
+        if (bytes_received == SOCKET_ERROR) {
+            int error_code = WSAGetLastError();
+            if (error_code == WSAEWOULDBLOCK) {
+                // Nema podataka, nastavi sa sledećim slanjem
+                Sleep(100);  // Sleep for 100 ms before retrying
+                continue;
+            }
+            else {
+                printf("recvfrom failed: %d\n", error_code);
+                break;  // Exit the loop if an error other than WSAEWOULDBLOCK occurs
+            }
+        }
+
+        buffer[bytes_received] = '\0';  // Null-terminate the received message
+        if (strcmp(buffer, "EXIT") == 0) {
+            printf("Kraj je signaliziran");
+            break;
+        }
+
+        printf("Received from server: %s\n", buffer);
     }
-    else {
-        WaitForSingleObject(continuousThread, INFINITE);
-        CloseHandle(continuousThread);
-    }
+
+       
 
     return 0;
 }
+
+
 
 DWORD WINAPI send_stress_message(LPVOID param) {
     struct sockaddr_in server_addr, local_addr;
