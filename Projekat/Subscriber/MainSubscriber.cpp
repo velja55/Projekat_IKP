@@ -60,11 +60,6 @@ DWORD WINAPI receiveMessages(LPVOID param) {
             programExit = 1; // Signalizacija za kraj programa
             return 0;
         }
-
-        if (strcmp(buffer, "Unsubscribed by ADMIN") == 0) {
-            keepReceiving = 0;
-            return 0;
-        }
     }
 
     return 0;
@@ -137,11 +132,6 @@ DWORD WINAPI communicateWithServer(LPVOID args) {
             printf("Server Response: %s\n", buffer);
 
             if (strcmp(buffer, "EXIT") == 0) {
-                programExit = 1;
-                return 0;
-            }
-
-            if (strcmp(buffer, "Unsubscribed by ADMIN") == 0) {
                 programExit = 1;
                 return 0;
             }

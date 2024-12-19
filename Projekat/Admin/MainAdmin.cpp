@@ -19,7 +19,8 @@ HashSet* glavniHashSet;
 CRITICAL_SECTION criticalSection;           //ovaj kritical sektion msm da ni ne koristimo
 Queue* queueZaPoruke;
 
-
+int nizSubscribera[1000];
+int brojSubscribera = 0;
 
 // Struktura za prosleđivanje podataka nitima
 typedef struct {
@@ -30,50 +31,6 @@ typedef struct {
 
 
 HANDLE workerThreads[THREAD_POOL_SIZE];  // Array to store thread handles
-
-
-void sendExitToAllSubscribers(HashSet* hashSet) {
-    const char* exitMessage = "EXIT"; // Poruka koja se šalje
-    EnterCriticalSection(&hashSet->criticalSection); // Osiguravanje sinhronizacije
-
-    // Prolaz kroz sve bucket-e
-    for (size_t i = 0; i < hashSet->capacity; i++) {
-        HashNode* currentPublisher = hashSet->buckets[i];
-
-        // Prolaz kroz svaki `HashNode` unutar trenutnog `bucket`a
-        while (currentPublisher != NULL) {
-            Node* currentSubscriber = currentPublisher->subscribers.head;
-
-            // Prolaz kroz `LinkedList` (sve subscribere za trenutnog publishera)
-            while (currentSubscriber != NULL) {
-                int result = sendto(
-                    currentSubscriber->socket,
-                    exitMessage,
-                    strlen(exitMessage),
-                    0,
-                    (struct sockaddr*)&currentSubscriber->addr,
-                    sizeof(currentSubscriber->addr)
-                );
-
-                if (result == SOCKET_ERROR) {
-                    printf("Greška pri slanju poruke subscriberu sa ID %d: %d\n",
-                        currentSubscriber->key, WSAGetLastError());
-                }
-                else {
-                    printf("EXIT poruka poslata subscriberu sa ID %d.\n", currentSubscriber->key);
-                }
-
-                currentSubscriber = currentSubscriber->next; // Sledeći subscriber
-            }
-
-            currentPublisher = currentPublisher->next; // Sledeći publisher u bucket-u
-        }
-    }
-
-    LeaveCriticalSection(&hashSet->criticalSection); // Oslobađanje kritične sekcije
-}
-
-
 
 
 DWORD WINAPI WorkerFunction(LPVOID lpParam) {
@@ -548,7 +505,33 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
         FD_SET(subscriberSocket, &readfds);  // Monitor the subscriber socket
         // If the shutdown signal is set, exit gracefully
         if (shutdown_variable == true) {
-            sendExitToAllSubscribers(glavniHashSet);
+            for (int i = 0; i < brojSubscribera; i++) {
+                struct sockaddr_in subscriberAddr;
+                memset(&subscriberAddr, 0, sizeof(subscriberAddr)); // Reset strukture
+
+                subscriberAddr.sin_family = AF_INET;             // IPv4
+                subscriberAddr.sin_port = htons(nizSubscribera[i]); // Pretplatnikov port iz niza
+                subscriberAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // Lokalne veze (127.0.0.1) za testiranje
+
+                // Slanje poruke "EXIT" pretplatniku
+                int sentBytes = sendto(
+                    subscriberSocket,
+                    "EXIT",
+                    strlen("EXIT"),
+                    0,
+                    (struct sockaddr*)&subscriberAddr,
+                    sizeof(subscriberAddr)
+                );
+
+                if (sentBytes == SOCKET_ERROR) {
+                    printf("Error: Failed to send EXIT to subscriber on port %d. WSA Error Code: %d\n",
+                        nizSubscribera[i], WSAGetLastError());
+                }
+                else {
+                    printf("EXIT sent to subscriber on port %d\n", nizSubscribera[i]);
+                }
+            }
+            //sendExitToAllSubscribers(glavniHashSet);
             break;
         }
 
@@ -594,6 +577,12 @@ DWORD WINAPI subscriber_processing_thread(LPVOID arg) {
                     sendto(subscriberSocket, "Subscribed", strlen("Subscribed"), 0, (struct sockaddr*)&clientAddr, addrLen);
                     printHashSet(glavniHashSet);
                     printf("Subscriber %d added to Publisher %d\n", subscriberID, publisherID);
+                    /*int nizSubscribera[1000];
+                    int brojSubscribera = 0;*/
+                    nizSubscribera[brojSubscribera] = subscriberID;
+                    brojSubscribera++;
+
+
                 }
                 else {
                     sendto(subscriberSocket, "Not Able to Subscribe", strlen("Not Able to Subscribe"), 0, (struct sockaddr*)&clientAddr, addrLen);
