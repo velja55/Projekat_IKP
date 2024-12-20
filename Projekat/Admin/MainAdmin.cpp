@@ -100,14 +100,15 @@ DWORD WINAPI WorkerFunction(LPVOID lpParam) {
             }
 
             // Free memory allocated for the message
-            free(message);
+            
         }
         else {
             // No message to dequeue, wait for a short period to avoid busy waiting
             Sleep(100);  // Sleep for 100 milliseconds
         }
+        free(message);
     }
-
+    
     printf("Worker thread exiting...\n");
     return 0;
 }

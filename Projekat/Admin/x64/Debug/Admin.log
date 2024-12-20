@@ -1,13 +1,13 @@
 ﻿  MainAdmin.cpp
 C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(63,31): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(289,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(435,46): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(440,54): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(457,50): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(479,60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(520,27): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(577,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(588,77): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(596,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(600,77): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(290,62): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(436,46): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(441,54): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(458,50): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(480,60): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(521,27): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(578,66): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(589,77): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(597,68): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Admin\MainAdmin.cpp(601,77): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   Admin.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Admin.exe
