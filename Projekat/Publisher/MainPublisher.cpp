@@ -8,6 +8,8 @@
 #define MAX_BUFFER_SIZE 1024         // Definiše maksimalnu veličinu bafera (1024 bajta) za prijem i slanje podataka.
 #define SERVER_PORT 12345            // Definiše port na kojem server komunicira sa klijentima (UDP port 12345).
 
+volatile int exit_program = 0;  // Globalna promenljiva koja označava da treba da se izađe iz programa
+
 
 const int stresCount = 50;
 // Struktura za prosleđivanje parametara u nit
@@ -40,13 +42,14 @@ DWORD WINAPI send_message(LPVOID param) {
     char message[MAX_BUFFER_SIZE];
     char buffer[MAX_BUFFER_SIZE];
     int bytes_received;
-    int max_size;
+
+    fd_set readfds;
+    struct timeval timeout;
 
     // Konfiguracija servera
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SERVER_PORT);
-
     if (inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr) <= 0) {
         printf("Invalid IP address\n");
         closesocket(sockfd);
@@ -65,6 +68,7 @@ DWORD WINAPI send_message(LPVOID param) {
     }
 
     // Unos maksimalne veličine
+    int max_size;
     printf("Enter the max size: ");
     scanf_s("%d", &max_size);
     getchar();  // Uklanja znak za novi red iz input buffer-a
@@ -80,65 +84,58 @@ DWORD WINAPI send_message(LPVOID param) {
         return 1;
     }
 
-    // Prijem odgovora od servera
-    bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-    if (bytes_received == SOCKET_ERROR) {
-        printf("recvfrom failed\n");
-        closesocket(sockfd);
-        return 1;
-    }
+    // Glavna petlja za slanje poruka
+    while (true) {
+        // Postavljanje `select` za proveru poruka od servera
+        FD_ZERO(&readfds);
+        FD_SET(sockfd, &readfds);
+        timeout.tv_sec = 0;  // Proveravajte na svakih 500 ms
+        timeout.tv_usec = 500000;
 
-    buffer[bytes_received] = '\0';
-    printf("Received from server: %s\n", buffer);
-
-    // Kontinuirano slanje poruka nakon inicijalne
-    while (shutdown_variable == false) {
-        printf("Enter a message to send (or 'exit' to quit): ");
-        fgets(message, sizeof(message), stdin);
-        message[strcspn(message, "\n")] = '\0';  // Remove newline character
-
-        if (strcmp(message, "exit") == 0) {
-            printf("Exiting message sender...\n");
-            break;  // Exit the loop and terminate the thread
-        }
-
-        // Kombinovanje publisher name i message u jednu poruku
-        snprintf(buffer, sizeof(buffer), "operacija=2|publisher=%s|message=%s", params->publisherName, message);
-
-        // Slanje poruke serveru
-        int bytes_sent = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
-        if (bytes_sent == SOCKET_ERROR) {
-            printf("sendto failed: %d\n", WSAGetLastError());
-            break;  // Exit the loop if sending fails
-        }
-
-        // Prijem odgovora od servera (non-blocking)
-        bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
-
-        // Provera da li soket nije spreman za prijem (non-blocking behavior)
-        if (bytes_received == SOCKET_ERROR) {
-            int error_code = WSAGetLastError();
-            if (error_code == WSAEWOULDBLOCK) {
-                // Nema podataka, nastavi sa sledećim slanjem
-                Sleep(100);  // Sleep for 100 ms before retrying
-                continue;
-            }
-            else {
-                printf("recvfrom failed: %d\n", error_code);
-                break;  // Exit the loop if an error other than WSAEWOULDBLOCK occurs
-            }
-        }
-
-        buffer[bytes_received] = '\0';  // Null-terminate the received message
-        if (strcmp(buffer, "EXIT") == 0) {
-            printf("Kraj je signaliziran");
+        // Proverite dolazne poruke od servera
+        int ret = select(0, &readfds, NULL, NULL, &timeout);
+        if (ret == SOCKET_ERROR) {
+            printf("select failed: %d\n", WSAGetLastError());
             break;
         }
 
-        printf("Received from server: %s\n", buffer);
-    }
+        if (ret > 0 && FD_ISSET(sockfd, &readfds)) {
+            bytes_received = recvfrom(sockfd, buffer, sizeof(buffer), 0, NULL, NULL);
+            if (bytes_received > 0) {
+                buffer[bytes_received] = '\0';
+                if (strcmp(buffer, "EXIT") == 0) {
+                    printf("EXIT message received from server. Terminating...\n");
+                    exit_program = 1;  // Postavite exit_program na 1 kada server pošalje "EXIT"
+                    break;
+                }
+                printf("Received from server: %s\n", buffer);
+            }
+        }
 
-       
+        if (exit_program) {  // Ako je exit_program postavljen, prekinite petlju
+            break;
+        }
+
+        // Proverite unos korisnika
+        printf("Enter a message to send (or 'exit' to quit): ");
+        if (fgets(message, sizeof(message), stdin) != NULL) {
+            message[strcspn(message, "\n")] = '\0';  // Remove newline character
+            if (strcmp(message, "exit") == 0) {
+                printf("Exiting message sender...\n");
+                break;
+            }
+
+            // Kombinovanje podataka za slanje
+            snprintf(buffer, sizeof(buffer), "operacija=2|publisher=%s|message=%s", params->publisherName, message);
+
+            // Slanje poruke serveru
+            bytes_sent = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr*)&server_addr, sizeof(server_addr));
+            if (bytes_sent == SOCKET_ERROR) {
+                printf("sendto failed: %d\n", WSAGetLastError());
+                break;
+            }
+        }
+    }
 
     return 0;
 }

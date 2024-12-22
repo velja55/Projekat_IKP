@@ -33,7 +33,6 @@ LinkedList* getSubscribers(HashSet* hashSet, int publisherKey);
 void freeHashSet(HashSet* hashSet);
 void printHashSet(HashSet* hashSet);
 int* getAllPublisherIDs(HashSet* hashSet);
-
 HashNode* findPublisherNodeBySubscriberID(HashSet* hashSet, int subscriberID);  // da vidimo da li id subscrajbera uopste postoji ako postoji vraca hashnode u kom se nalazi
 
 #endif

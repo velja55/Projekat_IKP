@@ -17,6 +17,8 @@ void initHashSet(HashSet* hashSet) {
     InitializeCriticalSection(&hashSet->criticalSection); // Initialize Critical Section
 }
 
+
+
 // Hash function to map a key to a bucket
 unsigned int hashFunction(int key, size_t capacity) {
     unsigned int hash = 2166136261u;

@@ -33,6 +33,60 @@ typedef struct {
 HANDLE workerThreads[THREAD_POOL_SIZE];  // Array to store thread handles
 
 
+void sendExitMessageToAllPublishers(HashSet* hashSet) {
+    const char* exitMessage = "EXIT";
+
+    // Kreiranje UDP soketa
+    SOCKET udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (udpSocket == INVALID_SOCKET) {
+        printf("Failed to create UDP socket. Error: %d\n", WSAGetLastError());
+        return;
+    }
+
+    EnterCriticalSection(&hashSet->criticalSection);
+
+    for (size_t i = 0; i < hashSet->capacity; i++) {
+        HashNode* current = hashSet->buckets[i];
+
+        // Iteracija kroz sve izdavače u bucket-u
+        while (current != NULL) {
+            struct sockaddr_in publisherAddr;
+            memset(&publisherAddr, 0, sizeof(publisherAddr));
+            publisherAddr.sin_family = AF_INET;
+            publisherAddr.sin_port = htons(current->key); // Port iz hash tabele (pretpostavlja se da je `key` port)
+
+            // Konverzija IP adrese pomoću inet_pton
+            if (inet_pton(AF_INET, "127.0.0.1", &publisherAddr.sin_addr) != 1) {
+                printf("Failed to convert IP address. Skipping publisher on port %d.\n", current->key);
+                current = current->next;
+                continue;
+            }
+
+            // Slanje EXIT poruke izdavaču
+            if (sendto(
+                udpSocket,                 // Privremeni UDP soket
+                exitMessage,               // Poruka "EXIT"
+                (int)strlen(exitMessage),  // Dužina poruke
+                0,                         // Flags
+                (struct sockaddr*)&publisherAddr, // Adresa izdavača
+                sizeof(publisherAddr)) == SOCKET_ERROR) {
+                printf("Failed to send EXIT message to publisher on port %d. Error: %d\n", current->key, WSAGetLastError());
+            }
+            else {
+                printf("EXIT message sent to publisher on port %d.\n", current->key);
+            }
+
+            current = current->next; // Prelazak na sledećeg izdavača u bucket-u
+        }
+    }
+
+    LeaveCriticalSection(&hashSet->criticalSection);
+
+    // Zatvaranje soketa nakon završetka
+    closesocket(udpSocket);
+}
+
+
 DWORD WINAPI WorkerFunction(LPVOID lpParam) {
     // Set up for periodic shutdown check
     while (TRUE) {
@@ -388,7 +442,7 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
 
     printf("Thread for processing publisher messages is running...\n");
 
-    while (shutdown_variable == false) {
+    while (true) {
         FD_ZERO(&readfds);
         FD_SET(sockfd, &readfds);  // Monitor the publisher socket
 
@@ -396,12 +450,11 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
         ret = select(0, &readfds, NULL, NULL, &timeout);
 
         // If select times out, just continue and check for shutdown condition
-        if (ret == 0) {
-            continue;  // Timeout occurred, nothing to read, just loop and check shutdown
-        }
+        
 
         // If the shutdown signal is set, exit gracefully
         if (shutdown_variable == true) {
+            sendExitMessageToAllPublishers(glavniHashSet);
             break;
         }
 
@@ -432,14 +485,9 @@ DWORD WINAPI publisher_processing_thread(LPVOID arg) {
                 enqueue(queueZaPoruke, publisherID, poruka);  // Add messages to the queue
                 printQueue(queueZaPoruke);
             }
-            if (shutdown_variable == true) {
-                sendto(sockfd, "EXIT", strlen("EXIT"), 0, (struct sockaddr*)&client_addr, addr_len);
-                break;
-            }
-            else {
-
+            
                 sendto(sockfd, "Acknowledged", strlen("Acknowledged"), 0, (struct sockaddr*)&client_addr, addr_len);
-            }
+            
             // Free dynamically allocated memory for the message (to avoid memory leaks)
             free(poruka);
         }
