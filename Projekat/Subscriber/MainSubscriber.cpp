@@ -56,7 +56,7 @@ DWORD WINAPI receiveMessages(LPVOID param) {
         printf("\nMessage from publisher: %s\n", buffer);
 
         if (strcmp(buffer, "EXIT") == 0) {
-            printf("Shutdown signal received. Exiting program...\n");
+            printf("Shutdown signal received. Enter any key to shutdown program...\n");
             programExit = 1; // Signalizacija za kraj programa
             return 0;
         }
@@ -104,7 +104,6 @@ DWORD WINAPI communicateWithServer(LPVOID args) {
         if (programExit == 1) {
             return 1;
         }
-        printf("Promenljiva za exitt:%d\n", programExit);
         printf("Enter your choice:");
         scanf_s("%d", &choice);
 

@@ -1,5 +1,6 @@
 ﻿  MainPublisher.cpp
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(106,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(167,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(222,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(374,1): error C4703: potentially uninitialized local pointer variable 'receiveThread' used
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(69,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(121,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(182,51): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\Publisher\MainPublisher.cpp(237,55): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Publisher.vcxproj -> C:\Users\lukic\Desktop\fax4.godina\1.semstar\IKp\projekat\Projekat_IKP\Projekat\x64\Debug\Publisher.exe
