@@ -7,16 +7,28 @@
       "RelativeMoniker": "D:0:0:{551C7A9D-9570-40A2-AC0F-02FAB4FB00DE}|Publisher\\Publisher.vcxproj|solutionrelative:Publisher\\MainPublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|solutionrelative:Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\MainAdmin.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\QueuePublisher.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\LinkedList.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\LinkedList.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\LinkedList.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\LinkedList.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\HashSetForSubscribers.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|solutionrelative:Admin\\HashSetForSubscribers.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{318E14F2-46F1-4187-88C2-E6B1C3BBD321}|Subscriber\\Subscriber.vcxproj|solutionrelative:Subscriber\\MainSubscriber.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E451B9DF-F552-4758-899F-33F1B620B06F}|Admin\\Admin.vcxproj|C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\HashSetForSubscribers.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -34,23 +46,50 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
               "DocumentIndex": 3,
+              "Title": "LinkedList.cpp",
+              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\LinkedList.cpp",
+              "RelativeDocumentMoniker": "Admin\\LinkedList.cpp",
+              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\LinkedList.cpp",
+              "RelativeToolTip": "Admin\\LinkedList.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-07-06T19:54:27.653Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "LinkedList.h",
+              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\LinkedList.h",
+              "RelativeDocumentMoniker": "Admin\\LinkedList.h",
+              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\LinkedList.h",
+              "RelativeToolTip": "Admin\\LinkedList.h",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-07-06T19:54:12.321Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "HashSetForSubscribers.cpp",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\HashSetForSubscribers.cpp",
               "RelativeDocumentMoniker": "Admin\\HashSetForSubscribers.cpp",
               "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\HashSetForSubscribers.cpp",
               "RelativeToolTip": "Admin\\HashSetForSubscribers.cpp",
-              "ViewState": "AgIAAIkAAAAAAAAAAAAAAO4AAAAOAAAAAAAAAA==",
+              "ViewState": "AgIAAFYAAAAAAAAAAAAAAHEAAAAEAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-18T19:19:33.274Z"
+              "WhenOpened": "2024-12-18T19:19:33.274Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 8,
               "Title": "Queue.h",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\Queue.h",
               "RelativeDocumentMoniker": "Admin\\Queue.h",
@@ -62,33 +101,46 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "MainAdmin.cpp",
-              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
-              "RelativeDocumentMoniker": "Admin\\MainAdmin.cpp",
-              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
-              "RelativeToolTip": "Admin\\MainAdmin.cpp",
-              "ViewState": "AgIAACsDAAAAAAAAAAAhwD0DAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-12-17T16:39:39.487Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "MainPublisher.cpp",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
               "RelativeDocumentMoniker": "Publisher\\MainPublisher.cpp",
               "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Publisher\\MainPublisher.cpp",
               "RelativeToolTip": "Publisher\\MainPublisher.cpp",
-              "ViewState": "AgIAADEAAAAAAAAAAAAAADgAAAAFAAAAAAAAAA==",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAAwDoAAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-12-18T12:52:53.055Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 2,
+              "Title": "QueuePublisher.cpp",
+              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp",
+              "RelativeDocumentMoniker": "Admin\\QueuePublisher.cpp",
+              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\QueuePublisher.cpp",
+              "RelativeToolTip": "Admin\\QueuePublisher.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-07-06T20:12:12.695Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainAdmin.cpp",
+              "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
+              "RelativeDocumentMoniker": "Admin\\MainAdmin.cpp",
+              "ToolTip": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\MainAdmin.cpp",
+              "RelativeToolTip": "Admin\\MainAdmin.cpp",
+              "ViewState": "AgIAAKwBAAAAAAAAAADwv98BAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-12-17T16:39:39.487Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "HashSetForSubscribers.h",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Admin\\HashSetForSubscribers.h",
               "RelativeDocumentMoniker": "Admin\\HashSetForSubscribers.h",
@@ -100,7 +152,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 6,
               "Title": "MainSubscriber.cpp",
               "DocumentMoniker": "C:\\Users\\lukic\\Desktop\\fax4.godina\\1.semstar\\IKp\\projekat\\Projekat_IKP\\Projekat\\Subscriber\\MainSubscriber.cpp",
               "RelativeDocumentMoniker": "Subscriber\\MainSubscriber.cpp",
@@ -108,8 +160,7 @@
               "RelativeToolTip": "Subscriber\\MainSubscriber.cpp",
               "ViewState": "AgIAAEsAAAAAAAAAAAAAAGkAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-11-23T14:50:02.414Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-11-23T14:50:02.414Z"
             }
           ]
         }

@@ -56,6 +56,17 @@ DWORD WINAPI send_message(LPVOID param) {
         return 1;
     }
 
+    printf("Enter the name of publisher:");
+    fgets(message, sizeof(message), stdin);
+    message[strcspn(message, "\n")] = '\0';
+
+    if (strcmp(message, "exit") == 0) {
+        printf("Exiting client...\n");
+        return 1;
+    }
+
+
+
     // Unos maksimalne veličine
     int max_size;
     printf("Enter the max size: ");
